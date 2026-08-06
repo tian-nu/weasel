@@ -98,13 +98,13 @@ $parallel = ($PSVersionTable.PSVersion.Major -ge 7)
 # $proxyCredential = New-Object System.Management.Automation.PSCredential($username, $password)
 
 # set GitHub API URL
-$global:api_pat = "https://api.github.com/repos/rime/librime/releases/"
+$global:api_pat = "https://api.github.com/repos/tian-nu/librime/releases/"
 $global:url_pat = "github"
 $global:url_replace = "github"
 # if ~/.get-rime.conf.ps1 exist, source it
 if (Test-Path "$home_dir/.get-rime.conf.ps1") { & "$home_dir/.get-rime.conf.ps1" }
 # if $api_pat not set, use the original api url, in case of conf files not exist
-if (!$api_pat) { $api_pat = "https://api.github.com/repos/rime/librime/releases/" }
+if (!$api_pat) { $api_pat = "https://api.github.com/repos/tian-nu/librime/releases/" }
 if ($tag) {
   $apiUrl = $api_pat + "tags/$tag"
 } else {
