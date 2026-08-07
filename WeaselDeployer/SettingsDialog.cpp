@@ -23,10 +23,12 @@ HWND EmbedChild(HWND hwnd, HWND host) {
 }  // namespace
 
 SettingsDialog::SettingsDialog(RimeSwitcherSettings* switcher_settings,
-                               UIStyleSettings* ui_style_settings)
+                               UIStyleSettings* ui_style_settings,
+                               int initial_page)
     : switcher_settings_(switcher_settings),
       ui_style_settings_(ui_style_settings),
       current_page_(0),
+      initial_page_(initial_page),
       modified_(false) {
   page_windows_[0] = page_windows_[1] = page_windows_[2] = page_windows_[3] =
       page_windows_[4] = NULL;
@@ -42,7 +44,9 @@ LRESULT SettingsDialog::OnInitDialog(UINT, WPARAM, LPARAM, BOOL&) {
   for (int i = 0; i < 5; ++i) {
     SendMessage(nav, LB_ADDSTRING, 0, (LPARAM)titles[i]);
   }
-  SendMessage(nav, LB_SETCURSEL, 0, 0);
+  if (initial_page_ < 0 || initial_page_ >= 5)
+    initial_page_ = 0;
+  SendMessage(nav, LB_SETCURSEL, initial_page_, 0);
 
   HWND host = GetDlgItem(IDC_PAGE_HOST);
 
@@ -62,7 +66,7 @@ LRESULT SettingsDialog::OnInitDialog(UINT, WPARAM, LPARAM, BOOL&) {
   page_windows_[3] = EmbedChild(dict_.CreateEmbedded(host), host);
   page_windows_[4] = EmbedChild(ai_.Create(host), host);
 
-  ShowPage(0);
+  ShowPage(initial_page_);
   CenterWindow();
   BringWindowToTop();
   return TRUE;

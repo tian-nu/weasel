@@ -70,7 +70,7 @@ void Configurator::Initialize() {
   rime_api->deployer_initialize(NULL);
 }
 
-int Configurator::Run(bool installing) {
+int Configurator::Run(bool installing, int initial_page) {
   RimeModule* levers = rime_get_api()->find_module("levers");
   if (!levers)
     return 1;
@@ -83,7 +83,7 @@ int Configurator::Run(bool installing) {
   RimeSwitcherSettings* switcher_settings = api->switcher_settings_init();
   UIStyleSettings ui_style_settings;
 
-  SettingsDialog dialog(switcher_settings, &ui_style_settings);
+  SettingsDialog dialog(switcher_settings, &ui_style_settings, initial_page);
   if (dialog.DoModal() == IDOK) {
     reconfigured = dialog.Modified();
     if (installing || reconfigured) {
@@ -127,46 +127,6 @@ int Configurator::UpdateWorkspace(bool report_errors) {
     rime->deploy();
     // initialize weasel config
     rime->deploy_config_file("weasel.yaml", "config_version");
-  }
-
-  CloseHandle(hMutex);  // should be closed before resuming service.
-
-  if (client.Connect()) {
-    LOG(INFO) << "Resuming service.";
-    client.EndMaintenance();
-  }
-  return 0;
-}
-
-int Configurator::DictManagement() {
-  HANDLE hMutex = CreateMutex(NULL, TRUE, L"WeaselDeployerMutex");
-  if (!hMutex) {
-    LOG(ERROR) << "Error creating WeaselDeployerMutex.";
-    return 1;
-  }
-  if (GetLastError() == ERROR_ALREADY_EXISTS) {
-    LOG(WARNING) << "another deployer process is running; aborting operation.";
-    CloseHandle(hMutex);
-    // MessageBox(NULL, L"正在執行另一項部署任務，請稍候再試。", L"【小狼毫】",
-    // MB_OK | MB_ICONINFORMATION);
-    MSG_BY_IDS(IDS_STR_DEPLOYING_WAIT, IDS_STR_WEASEL,
-               MB_OK | MB_ICONINFORMATION);
-    return 1;
-  }
-
-  weasel::Client client;
-  if (client.Connect()) {
-    LOG(INFO) << "Turning WeaselServer into maintenance mode.";
-    client.StartMaintenance();
-  }
-
-  {
-    RimeApi* rime = rime_get_api();
-    if (RIME_API_AVAILABLE(rime, run_task)) {
-      rime->run_task("installation_update");  // setup user data sync dir
-    }
-    DictManagementDialog dlg;
-    dlg.DoModal();
   }
 
   CloseHandle(hMutex);  // should be closed before resuming service.

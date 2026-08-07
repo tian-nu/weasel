@@ -1,4 +1,4 @@
-﻿#include "stdafx.h"
+#include "stdafx.h"
 #include "InstallOptionsDlg.h"
 #include <atlstr.h>
 #include <ShlObj.h>
@@ -20,7 +20,7 @@ LRESULT InstallOptionsDialog::OnInitDialog(UINT, WPARAM, LPARAM, BOOL&) {
   dir_.Attach(GetDlgItem(IDC_EDIT_DIR));
 
   CheckRadioButton(IDC_RADIO_CN, IDC_RADIO_TW,
-                   (hant ? IDC_RADIO_TW : IDC_RADIO_CN));
+                   IDC_RADIO_CN);  // default to Simplified Chinese
   CheckRadioButton(
       IDC_RADIO_DEFAULT_DIR, IDC_RADIO_CUSTOM_DIR,
       (user_dir.empty() ? IDC_RADIO_DEFAULT_DIR : IDC_RADIO_CUSTOM_DIR));

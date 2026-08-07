@@ -16,7 +16,8 @@ class SettingsDialog : public CDialogImpl<SettingsDialog> {
   enum { IDD = IDD_SETTINGS_MAIN };
 
   SettingsDialog(RimeSwitcherSettings* switcher_settings,
-                 UIStyleSettings* ui_style_settings);
+                 UIStyleSettings* ui_style_settings,
+                 int initial_page = 0);
   ~SettingsDialog();
 
   bool Modified() const { return modified_; }
@@ -49,5 +50,6 @@ class SettingsDialog : public CDialogImpl<SettingsDialog> {
 
   HWND page_windows_[5];
   int current_page_;
+  int initial_page_;
   bool modified_;
 };

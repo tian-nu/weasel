@@ -7,8 +7,8 @@ class Configurator {
   explicit Configurator();
 
   void Initialize();
-  int Run(bool installing);
+  // initial_page selects the settings-window page to show on open
+  int Run(bool installing, int initial_page = 0);
   int UpdateWorkspace(bool report_errors = false);
-  int DictManagement();
   int SyncUserData();
 };
