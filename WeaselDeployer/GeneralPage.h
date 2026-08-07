@@ -1,10 +1,6 @@
 #pragma once
 
 #include "resource.h"
-#include <atlbase.h>
-#include <atlapp.h>
-#include <atlcrack.h>
-#include <atldlgs.h>
 #include <rime_levers_api.h>
 
 // General page: candidate layout, tray icon. Persists to weasel.custom.yaml.

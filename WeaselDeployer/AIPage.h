@@ -1,10 +1,6 @@
 #pragma once
 
 #include "resource.h"
-#include <atlbase.h>
-#include <atlapp.h>
-#include <atlcrack.h>
-#include <atldlgs.h>
 
 // AI page: default AI mode (traditional / hybrid / pure) and head count.
 // Persists to ai_pinyin.custom.yaml via patch.
