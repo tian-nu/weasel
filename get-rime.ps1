@@ -108,7 +108,9 @@ if (!$api_pat) { $api_pat = "https://api.github.com/repos/tian-nu/librime/releas
 if ($tag) {
   $apiUrl = $api_pat + "tags/$tag"
 } else {
-  $apiUrl = $api_pat + "latest"
+  # tags/latest instead of latest: the fork's nightly build is a
+  # prerelease, and the /releases/latest endpoint skips prereleases.
+  $apiUrl = $api_pat + "tags/latest"
 }
 $webRequestParams = @{
   Uri = $apiUrl
