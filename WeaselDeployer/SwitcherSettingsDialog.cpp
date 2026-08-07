@@ -22,13 +22,13 @@ SwitcherSettingsDialog::~SwitcherSettingsDialog() {}
 HWND SwitcherSettingsDialog::CreateEmbedded(HWND host) {
   HWND hwnd = Create(host);
   if (hwnd) {
-    LONG style = GetWindowLong(hwnd, GWL_STYLE);
-    SetWindowLong(hwnd, GWL_STYLE,
-                  (style & ~(WS_POPUP | WS_CAPTION | WS_SYSMENU)) | WS_CHILD);
-    SetParent(hwnd, host);
+    LONG style = ::GetWindowLong(hwnd, GWL_STYLE);
+    ::SetWindowLong(hwnd, GWL_STYLE,
+                    (style & ~(WS_POPUP | WS_CAPTION | WS_SYSMENU)) | WS_CHILD);
+    ::SetParent(hwnd, host);
     RECT rc = {0};
-    GetClientRect(host, &rc);
-    MoveWindow(hwnd, 0, 0, rc.right, rc.bottom, TRUE);
+    ::GetClientRect(host, &rc);
+    ::MoveWindow(hwnd, 0, 0, rc.right, rc.bottom, TRUE);
     embedded_ = true;
   }
   return hwnd;

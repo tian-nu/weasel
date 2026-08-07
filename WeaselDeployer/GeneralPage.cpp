@@ -53,12 +53,17 @@ void GeneralPage::Load() {
   RimeApi* rime = rime_get_api();
 
   bool horizontal = true;  // default: horizontal candidates
-  rime->config_get_bool(&config, "style/horizontal", &horizontal);
+  Bool horizontal_value = horizontal ? 1 : 0;
+  if (rime->config_get_bool(&config, "style/horizontal", &horizontal_value))
+    horizontal = horizontal_value != 0;
   CheckRadioButton(IDC_RADIO_HORIZONTAL, IDC_RADIO_VERTICAL,
                    horizontal ? IDC_RADIO_HORIZONTAL : IDC_RADIO_VERTICAL);
 
   bool tray_icon = false;
-  rime->config_get_bool(&config, "style/display_tray_icon", &tray_icon);
+  Bool tray_icon_value = 0;
+  if (rime->config_get_bool(&config, "style/display_tray_icon",
+                            &tray_icon_value))
+    tray_icon = tray_icon_value != 0;
   CheckDlgButton(IDC_CHECK_TRAY_ICON, tray_icon ? BST_CHECKED : BST_UNCHECKED);
 
   modified_ = false;
