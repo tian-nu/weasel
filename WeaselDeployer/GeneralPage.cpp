@@ -27,17 +27,19 @@ LRESULT GeneralPage::OnInitDialog(UINT, WPARAM, LPARAM, BOOL&) {
   return TRUE;
 }
 
-LRESULT GeneralPage::OnClose() {
+LRESULT GeneralPage::OnClose(UINT, WPARAM, LPARAM, BOOL&) {
   DestroyWindow();
   return 0;
 }
 
-void GeneralPage::OnLayoutChanged(UINT, int, HWND, BOOL&) {
+LRESULT GeneralPage::OnLayoutChanged(WORD, WORD, HWND, BOOL&) {
   modified_ = true;
+  return 0;
 }
 
-void GeneralPage::OnTrayIconChanged(UINT, int, HWND, BOOL&) {
+LRESULT GeneralPage::OnTrayIconChanged(WORD, WORD, HWND, BOOL&) {
   modified_ = true;
+  return 0;
 }
 
 void GeneralPage::Load() {

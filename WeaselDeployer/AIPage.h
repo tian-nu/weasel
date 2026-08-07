@@ -13,23 +13,23 @@ class AIPage : public CDialogImpl<AIPage> {
   enum { IDD = IDD_AI_PAGE };
 
   AIPage();
-  ~AIPage() override;
+  ~AIPage();
 
   BEGIN_MSG_MAP(AIPage)
-  MSG_WM_INITDIALOG(OnInitDialog)
-  MSG_WM_CLOSE(OnClose)
-  COMMAND_ID_HANDLER_EX(IDC_AI_MODE_OFF, OnModeChanged)
-  COMMAND_ID_HANDLER_EX(IDC_AI_MODE_HYBRID, OnModeChanged)
-  COMMAND_ID_HANDLER_EX(IDC_AI_MODE_PURE, OnModeChanged)
+  MESSAGE_HANDLER(WM_INITDIALOG, OnInitDialog)
+  MESSAGE_HANDLER(WM_CLOSE, OnClose)
+  COMMAND_ID_HANDLER(IDC_AI_MODE_OFF, OnModeChanged)
+  COMMAND_ID_HANDLER(IDC_AI_MODE_HYBRID, OnModeChanged)
+  COMMAND_ID_HANDLER(IDC_AI_MODE_PURE, OnModeChanged)
   END_MSG_MAP()
 
   void Load();
   bool Apply();
 
- private:
+ protected:
   LRESULT OnInitDialog(UINT, WPARAM, LPARAM, BOOL&);
-  LRESULT OnClose();
-  void OnModeChanged(UINT, int, HWND, BOOL&);
+  LRESULT OnClose(UINT, WPARAM, LPARAM, BOOL&);
+  LRESULT OnModeChanged(WORD, WORD, HWND, BOOL&);
 
   bool modified_;
 };

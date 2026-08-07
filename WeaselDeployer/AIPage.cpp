@@ -72,13 +72,14 @@ LRESULT AIPage::OnInitDialog(UINT, WPARAM, LPARAM, BOOL&) {
   return TRUE;
 }
 
-LRESULT AIPage::OnClose() {
+LRESULT AIPage::OnClose(UINT, WPARAM, LPARAM, BOOL&) {
   DestroyWindow();
   return 0;
 }
 
-void AIPage::OnModeChanged(UINT, int, HWND, BOOL&) {
+LRESULT AIPage::OnModeChanged(WORD, WORD, HWND, BOOL&) {
   modified_ = true;
+  return 0;
 }
 
 void AIPage::Load() {
