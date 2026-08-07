@@ -87,9 +87,9 @@ void AIPage::Load() {
   if (mode < 0)
     mode = 1;  // default: AI hybrid
   CheckRadioButton(IDC_AI_MODE_OFF, IDC_AI_MODE_PURE,
-                   mode == 0 ? IDC_AI_MODE_OFF
-                             : (mode == 2 ? IDC_AI_MODE_PURE
-                                          : IDC_AI_MODE_HYBRID));
+                   mode == 0
+                       ? IDC_AI_MODE_OFF
+                       : (mode == 2 ? IDC_AI_MODE_PURE : IDC_AI_MODE_HYBRID));
   int head = ReadCurrentHead();
   if (head <= 0)
     head = 3;  // schema default

@@ -6,7 +6,8 @@
 #pragma warning(disable : 4005)
 #include "WeaselDeployer.h"
 
-GeneralPage::GeneralPage() : api_(nullptr), settings_(nullptr), modified_(false) {
+GeneralPage::GeneralPage()
+    : api_(nullptr), settings_(nullptr), modified_(false) {
   RimeApi* rime = rime_get_api();
   RimeModule* levers = rime->find_module("levers");
   if (levers) {
@@ -56,8 +57,7 @@ void GeneralPage::Load() {
 
   bool tray_icon = false;
   rime->config_get_bool(&config, "style/display_tray_icon", &tray_icon);
-  CheckDlgButton(IDC_CHECK_TRAY_ICON,
-                 tray_icon ? BST_CHECKED : BST_UNCHECKED);
+  CheckDlgButton(IDC_CHECK_TRAY_ICON, tray_icon ? BST_CHECKED : BST_UNCHECKED);
 
   modified_ = false;
 }

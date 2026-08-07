@@ -16,11 +16,11 @@ class GeneralPage : public CDialogImpl<GeneralPage> {
   ~GeneralPage() override;
 
   BEGIN_MSG_MAP(GeneralPage)
-    MSG_WM_INITDIALOG(OnInitDialog)
-    MSG_WM_CLOSE(OnClose)
-    COMMAND_ID_HANDLER_EX(IDC_RADIO_HORIZONTAL, OnLayoutChanged)
-    COMMAND_ID_HANDLER_EX(IDC_RADIO_VERTICAL, OnLayoutChanged)
-    COMMAND_ID_HANDLER_EX(IDC_CHECK_TRAY_ICON, OnTrayIconChanged)
+  MSG_WM_INITDIALOG(OnInitDialog)
+  MSG_WM_CLOSE(OnClose)
+  COMMAND_ID_HANDLER_EX(IDC_RADIO_HORIZONTAL, OnLayoutChanged)
+  COMMAND_ID_HANDLER_EX(IDC_RADIO_VERTICAL, OnLayoutChanged)
+  COMMAND_ID_HANDLER_EX(IDC_CHECK_TRAY_ICON, OnTrayIconChanged)
   END_MSG_MAP()
 
   // loads current values; call once after creation

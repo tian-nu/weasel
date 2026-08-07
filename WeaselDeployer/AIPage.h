@@ -15,11 +15,11 @@ class AIPage : public CDialogImpl<AIPage> {
   ~AIPage() override;
 
   BEGIN_MSG_MAP(AIPage)
-    MSG_WM_INITDIALOG(OnInitDialog)
-    MSG_WM_CLOSE(OnClose)
-    COMMAND_ID_HANDLER_EX(IDC_AI_MODE_OFF, OnModeChanged)
-    COMMAND_ID_HANDLER_EX(IDC_AI_MODE_HYBRID, OnModeChanged)
-    COMMAND_ID_HANDLER_EX(IDC_AI_MODE_PURE, OnModeChanged)
+  MSG_WM_INITDIALOG(OnInitDialog)
+  MSG_WM_CLOSE(OnClose)
+  COMMAND_ID_HANDLER_EX(IDC_AI_MODE_OFF, OnModeChanged)
+  COMMAND_ID_HANDLER_EX(IDC_AI_MODE_HYBRID, OnModeChanged)
+  COMMAND_ID_HANDLER_EX(IDC_AI_MODE_PURE, OnModeChanged)
   END_MSG_MAP()
 
   void Load();

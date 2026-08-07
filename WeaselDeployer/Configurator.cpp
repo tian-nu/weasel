@@ -45,9 +45,7 @@ Configurator::Configurator() {
   in.close();
   if (!has_patch) {
     std::wofstream out(default_custom, std::ios::app);
-    out << L"patch:\n"
-        << L"  menu:\n"
-        << L"    page_size: 7\n";
+    out << L"patch:\n" << L"  menu:\n" << L"    page_size: 7\n";
   }
 }
 
