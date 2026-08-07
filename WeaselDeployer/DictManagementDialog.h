@@ -13,6 +13,8 @@ class DictManagementDialog : public CDialogImpl<DictManagementDialog> {
 
   // embeds the dialog as a child of `host` (used by the settings window)
   HWND CreateEmbedded(HWND host);
+  // dictionary page has no pending state to persist
+  bool Apply() { return true; }
 
  protected:
   BEGIN_MSG_MAP(DictManagementDialog)

@@ -86,7 +86,7 @@ void SettingsDialog::ShowPage(int index) {
     return;
   for (int i = 0; i < 5; ++i) {
     if (page_windows_[i]) {
-      ShowWindow(page_windows_[i], i == index ? SW_SHOW : SW_HIDE);
+      ::ShowWindow(page_windows_[i], i == index ? SW_SHOW : SW_HIDE);
     }
   }
   current_page_ = index;
