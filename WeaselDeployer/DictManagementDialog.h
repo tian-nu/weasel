@@ -11,6 +11,9 @@ class DictManagementDialog : public CDialogImpl<DictManagementDialog> {
   DictManagementDialog();
   ~DictManagementDialog();
 
+  // embeds the dialog as a child of `host` (used by the settings window)
+  HWND CreateEmbedded(HWND host);
+
  protected:
   BEGIN_MSG_MAP(DictManagementDialog)
   MESSAGE_HANDLER(WM_INITDIALOG, OnInitDialog)

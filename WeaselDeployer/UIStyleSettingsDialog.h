@@ -7,8 +7,15 @@ class UIStyleSettingsDialog : public CDialogImpl<UIStyleSettingsDialog> {
  public:
   enum { IDD = IDD_STYLE_SETTING };
 
-  UIStyleSettingsDialog(UIStyleSettings* settings);
+  UIStyleSettingsDialog();
+  explicit UIStyleSettingsDialog(UIStyleSettings* settings);
   ~UIStyleSettingsDialog();
+
+  void Init(UIStyleSettings* settings) { settings_ = settings; }
+
+  HWND CreateEmbedded(HWND host);
+  // persists color scheme selection
+  bool Apply();
 
  protected:
   BEGIN_MSG_MAP(UIStyleSettingsDialog)
@@ -28,6 +35,7 @@ class UIStyleSettingsDialog : public CDialogImpl<UIStyleSettingsDialog> {
 
   UIStyleSettings* settings_;
   bool loaded_;
+  bool embedded_;
   std::vector<ColorSchemeInfo> preset_;
 
   CListBox color_schemes_;

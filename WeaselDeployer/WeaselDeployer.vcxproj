@@ -186,7 +186,10 @@
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="Configurator.h" />
+    <ClInclude Include="Configurator.h" />    <ClInclude Include="AIPage.h" />
+    <ClInclude Include="GeneralPage.h" />
+    <ClInclude Include="SettingsDialog.h" />
+
     <ClInclude Include="DictManagementDialog.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="stdafx.h" />
@@ -198,7 +201,10 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\RimeWithWeasel\WeaselUtility.cpp" />
-    <ClCompile Include="Configurator.cpp" />
+    <ClCompile Include="Configurator.cpp" />    <ClCompile Include="AIPage.cpp" />
+    <ClCompile Include="GeneralPage.cpp" />
+    <ClCompile Include="SettingsDialog.cpp" />
+
     <ClCompile Include="DictManagementDialog.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>

@@ -63,3 +63,17 @@
 #define _APS_NEXT_SYMED_VALUE           110
 #endif
 #endif
+// settings main window and pages
+#define IDD_SETTINGS_MAIN               200
+#define IDD_GENERAL_PAGE                201
+#define IDD_AI_PAGE                     202
+#define IDC_NAV_LIST                    1100
+#define IDC_PAGE_HOST                   1101
+#define IDC_RADIO_HORIZONTAL            1102
+#define IDC_RADIO_VERTICAL              1103
+#define IDC_CHECK_TRAY_ICON             1104
+#define IDC_AI_MODE_OFF                 1105
+#define IDC_AI_MODE_HYBRID              1106
+#define IDC_AI_MODE_PURE                1107
+#define IDC_AI_HEAD                     1108
+#define IDC_AI_MODEL_PATH               1109

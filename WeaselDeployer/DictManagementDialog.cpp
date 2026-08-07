@@ -1,4 +1,4 @@
-﻿#include "stdafx.h"
+#include "stdafx.h"
 #include "DictManagementDialog.h"
 #include "Configurator.h"
 #include <WeaselUtility.h>
@@ -62,6 +62,20 @@ DictManagementDialog::DictManagementDialog() {
 }
 
 DictManagementDialog::~DictManagementDialog() {}
+
+HWND DictManagementDialog::CreateEmbedded(HWND host) {
+  HWND hwnd = Create(host);
+  if (hwnd) {
+    LONG style = GetWindowLong(hwnd, GWL_STYLE);
+    SetWindowLong(hwnd, GWL_STYLE,
+                  (style & ~(WS_POPUP | WS_CAPTION | WS_SYSMENU)) | WS_CHILD);
+    SetParent(hwnd, host);
+    RECT rc = {0};
+    GetClientRect(host, &rc);
+    MoveWindow(hwnd, 0, 0, rc.right, rc.bottom, TRUE);
+  }
+  return hwnd;
+}
 
 void DictManagementDialog::Populate() {
   RimeUserDictIterator iter = {0};

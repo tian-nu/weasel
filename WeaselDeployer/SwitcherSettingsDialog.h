@@ -7,8 +7,17 @@ class SwitcherSettingsDialog : public CDialogImpl<SwitcherSettingsDialog> {
  public:
   enum { IDD = IDD_SWITCHER_SETTING };
 
-  SwitcherSettingsDialog(RimeSwitcherSettings* settings);
+  SwitcherSettingsDialog();
+  explicit SwitcherSettingsDialog(RimeSwitcherSettings* settings);
   ~SwitcherSettingsDialog();
+
+  void Init(RimeSwitcherSettings* settings) { settings_ = settings; }
+
+  // embeds the dialog as a child of `host` (used by the settings window)
+  HWND CreateEmbedded(HWND host);
+  // persists schema selection; returns true if anything changed
+  bool Apply();
+  bool modified() const { return modified_; }
 
  protected:
   BEGIN_MSG_MAP(SwitcherSettingsDialog)
@@ -27,11 +36,13 @@ class SwitcherSettingsDialog : public CDialogImpl<SwitcherSettingsDialog> {
 
   void Populate();
   void ShowDetails(RimeSchemaInfo* info);
+  bool DoSave();
 
   RimeLeversApi* api_;
   RimeSwitcherSettings* settings_;
   bool loaded_;
   bool modified_;
+  bool embedded_;
 
   CCheckListViewCtrl schema_list_;
   CStatic description_;

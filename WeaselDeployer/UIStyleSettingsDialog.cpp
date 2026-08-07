@@ -4,11 +4,37 @@
 #include "Configurator.h"
 #include <WeaselUtility.h>
 
+UIStyleSettingsDialog::UIStyleSettingsDialog()
+    : settings_(nullptr), loaded_(false), embedded_(false) {}
+
 UIStyleSettingsDialog::UIStyleSettingsDialog(UIStyleSettings* settings)
-    : settings_(settings), loaded_(false) {}
+    : settings_(settings), loaded_(false), embedded_(false) {}
 
 UIStyleSettingsDialog::~UIStyleSettingsDialog() {
   image_.Destroy();
+}
+
+HWND UIStyleSettingsDialog::CreateEmbedded(HWND host) {
+  HWND hwnd = Create(host);
+  if (hwnd) {
+    LONG style = GetWindowLong(hwnd, GWL_STYLE);
+    SetWindowLong(hwnd, GWL_STYLE,
+                  (style & ~(WS_POPUP | WS_CAPTION | WS_SYSMENU)) | WS_CHILD);
+    SetParent(hwnd, host);
+    RECT rc = {0};
+    GetClientRect(host, &rc);
+    MoveWindow(hwnd, 0, 0, rc.right, rc.bottom, TRUE);
+    embedded_ = true;
+  }
+  return hwnd;
+}
+
+bool UIStyleSettingsDialog::Apply() {
+  if (!settings_)
+    return true;
+  RimeLeversApi* api =
+      (RimeLeversApi*)rime_get_api()->find_module("levers")->get_api();
+  return api && api->save_settings(settings_->settings());
 }
 
 void UIStyleSettingsDialog::Populate() {
@@ -50,7 +76,8 @@ LRESULT UIStyleSettingsDialog::OnClose(UINT, WPARAM, LPARAM, BOOL&) {
 }
 
 LRESULT UIStyleSettingsDialog::OnOK(WORD, WORD code, HWND, BOOL&) {
-  EndDialog(code);
+  if (!embedded_)
+    EndDialog(code);
   return 0;
 }
 

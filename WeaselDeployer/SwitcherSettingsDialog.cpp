@@ -1,4 +1,4 @@
-﻿#include "stdafx.h"
+#include "stdafx.h"
 #include "SwitcherSettingsDialog.h"
 #include "Configurator.h"
 #include <algorithm>
@@ -7,12 +7,32 @@
 #include <WeaselUtility.h>
 #include "WeaselDeployer.h"
 
+SwitcherSettingsDialog::SwitcherSettingsDialog()
+    : settings_(nullptr), loaded_(false), modified_(false), embedded_(false) {
+  api_ = (RimeLeversApi*)rime_get_api()->find_module("levers")->get_api();
+}
+
 SwitcherSettingsDialog::SwitcherSettingsDialog(RimeSwitcherSettings* settings)
-    : settings_(settings), loaded_(false), modified_(false) {
+    : settings_(settings), loaded_(false), modified_(false), embedded_(false) {
   api_ = (RimeLeversApi*)rime_get_api()->find_module("levers")->get_api();
 }
 
 SwitcherSettingsDialog::~SwitcherSettingsDialog() {}
+
+HWND SwitcherSettingsDialog::CreateEmbedded(HWND host) {
+  HWND hwnd = Create(host);
+  if (hwnd) {
+    LONG style = GetWindowLong(hwnd, GWL_STYLE);
+    SetWindowLong(hwnd, GWL_STYLE,
+                  (style & ~(WS_POPUP | WS_CAPTION | WS_SYSMENU)) | WS_CHILD);
+    SetParent(hwnd, host);
+    RECT rc = {0};
+    GetClientRect(host, &rc);
+    MoveWindow(hwnd, 0, 0, rc.right, rc.bottom, TRUE);
+    embedded_ = true;
+  }
+  return hwnd;
+}
 
 void SwitcherSettingsDialog::Populate() {
   if (!settings_)
@@ -156,31 +176,40 @@ LRESULT SwitcherSettingsDialog::OnGetSchemata(WORD, WORD, HWND hWndCtl, BOOL&) {
   return 0;
 }
 
-LRESULT SwitcherSettingsDialog::OnOK(WORD, WORD code, HWND, BOOL&) {
-  if (modified_ && settings_ && schema_list_.GetItemCount() != 0) {
-    const char** selection = new const char*[schema_list_.GetItemCount()];
-    int count = 0;
-    for (int i = 0; i < schema_list_.GetItemCount(); ++i) {
-      if (!schema_list_.GetCheckState(i))
-        continue;
-      RimeSchemaInfo* info = (RimeSchemaInfo*)(schema_list_.GetItemData(i));
-      if (info) {
-        selection[count++] = api_->get_schema_id(info);
-      }
+bool SwitcherSettingsDialog::DoSave() {
+  if (!modified_ || !settings_ || schema_list_.GetItemCount() == 0)
+    return false;
+  const char** selection = new const char*[schema_list_.GetItemCount()];
+  int count = 0;
+  for (int i = 0; i < schema_list_.GetItemCount(); ++i) {
+    if (!schema_list_.GetCheckState(i))
+      continue;
+    RimeSchemaInfo* info = (RimeSchemaInfo*)(schema_list_.GetItemData(i));
+    if (info) {
+      selection[count++] = api_->get_schema_id(info);
     }
-    if (count == 0) {
-      // MessageBox(_T("至少要選用一項吧。"), _T("小狼毫不是這般用法"), MB_OK |
-      // MB_ICONEXCLAMATION);
-      MSG_BY_IDS(IDS_STR_ERR_AT_LEAST_ONE_SEL, IDS_STR_NOT_REGULAR,
-                 MB_OK | MB_ICONEXCLAMATION);
-      delete selection;
-      return 0;
-    }
-    api_->select_schemas(settings_, selection, count);
-    delete selection;
   }
-  EndDialog(code);
+  if (count == 0) {
+    MSG_BY_IDS(IDS_STR_ERR_AT_LEAST_ONE_SEL, IDS_STR_NOT_REGULAR,
+               MB_OK | MB_ICONEXCLAMATION);
+    delete selection;
+    return false;
+  }
+  api_->select_schemas(settings_, selection, count);
+  delete selection;
+  modified_ = false;
+  return true;
+}
+
+LRESULT SwitcherSettingsDialog::OnOK(WORD, WORD code, HWND, BOOL&) {
+  DoSave();
+  if (!embedded_)
+    EndDialog(code);
   return 0;
+}
+
+bool SwitcherSettingsDialog::Apply() {
+  return DoSave();
 }
 
 LRESULT SwitcherSettingsDialog::OnSchemaListItemChanged(int, LPNMHDR p, BOOL&) {

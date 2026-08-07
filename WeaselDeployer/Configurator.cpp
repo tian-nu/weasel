@@ -1,10 +1,11 @@
-﻿#include "stdafx.h"
+#include "stdafx.h"
 #include "WeaselDeployer.h"
 #include "Configurator.h"
 #include "SwitcherSettingsDialog.h"
 #include "UIStyleSettings.h"
 #include "UIStyleSettingsDialog.h"
 #include "DictManagementDialog.h"
+#include "SettingsDialog.h"
 #include <WeaselConstants.h>
 #include <WeaselIPC.h>
 #include <WeaselIPCData.h>
@@ -29,6 +30,25 @@ static void CreateFileIfNotExist(std::string filename) {
 Configurator::Configurator() {
   CreateFileIfNotExist("default.custom.yaml");
   CreateFileIfNotExist("weasel.custom.yaml");
+  // Seed the global schema patch on first run: 7 candidates per page.
+  std::filesystem::path default_custom =
+      WeaselUserDataPath() / u8tow("default.custom.yaml");
+  std::ifstream in(default_custom);
+  bool has_patch = false;
+  std::string line;
+  while (std::getline(in, line)) {
+    if (line.find("patch") != std::string::npos) {
+      has_patch = true;
+      break;
+    }
+  }
+  in.close();
+  if (!has_patch) {
+    std::wofstream out(default_custom, std::ios::app);
+    out << L"patch:\n"
+        << L"  menu:\n"
+        << L"    page_size: 7\n";
+  }
 }
 
 void Configurator::Initialize() {
@@ -52,36 +72,6 @@ void Configurator::Initialize() {
   rime_api->deployer_initialize(NULL);
 }
 
-static bool configure_switcher(RimeLeversApi* api,
-                               RimeSwitcherSettings* switchcer_settings,
-                               bool* reconfigured) {
-  RimeCustomSettings* settings = (RimeCustomSettings*)switchcer_settings;
-  if (!api->load_settings(settings))
-    return false;
-  SwitcherSettingsDialog dialog(switchcer_settings);
-  if (dialog.DoModal() == IDOK) {
-    if (api->save_settings(settings))
-      *reconfigured = true;
-    return true;
-  }
-  return false;
-}
-
-static bool configure_ui(RimeLeversApi* api,
-                         UIStyleSettings* ui_style_settings,
-                         bool* reconfigured) {
-  RimeCustomSettings* settings = ui_style_settings->settings();
-  if (!api->load_settings(settings))
-    return false;
-  UIStyleSettingsDialog dialog(ui_style_settings);
-  if (dialog.DoModal() == IDOK) {
-    if (api->save_settings(settings))
-      *reconfigured = true;
-    return true;
-  }
-  return false;
-}
-
 int Configurator::Run(bool installing) {
   RimeModule* levers = rime_get_api()->find_module("levers");
   if (!levers)
@@ -95,21 +85,16 @@ int Configurator::Run(bool installing) {
   RimeSwitcherSettings* switcher_settings = api->switcher_settings_init();
   UIStyleSettings ui_style_settings;
 
-  bool skip_switcher_settings =
-      installing && !api->is_first_run((RimeCustomSettings*)switcher_settings);
-  bool skip_ui_style_settings =
-      installing && !api->is_first_run(ui_style_settings.settings());
-
-  (skip_switcher_settings ||
-   configure_switcher(api, switcher_settings, &reconfigured)) &&
-      (skip_ui_style_settings ||
-       configure_ui(api, &ui_style_settings, &reconfigured));
+  SettingsDialog dialog(switcher_settings, &ui_style_settings);
+  if (dialog.DoModal() == IDOK) {
+    reconfigured = dialog.Modified();
+    if (installing || reconfigured) {
+      api->custom_settings_destroy((RimeCustomSettings*)switcher_settings);
+      return UpdateWorkspace(reconfigured);
+    }
+  }
 
   api->custom_settings_destroy((RimeCustomSettings*)switcher_settings);
-
-  if (installing || reconfigured) {
-    return UpdateWorkspace(reconfigured);
-  }
   return 0;
 }
 
