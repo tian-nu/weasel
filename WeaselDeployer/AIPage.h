@@ -1,5 +1,6 @@
 #pragma once
 
+#include "resource.h"
 #include <atlbase.h>
 #include <atlapp.h>
 #include <atlcrack.h>
