@@ -1,7 +1,11 @@
 #pragma once
 
+#include <Windows.h>
 #include "resource.h"
 #include <rime_levers_api.h>
+
+// custom message posted by the background wait thread after rime-install finishes
+const UINT kWM_SchemataRefreshed = WM_APP + 100;
 
 class SwitcherSettingsDialog : public CDialogImpl<SwitcherSettingsDialog> {
  public:
@@ -23,6 +27,7 @@ class SwitcherSettingsDialog : public CDialogImpl<SwitcherSettingsDialog> {
   BEGIN_MSG_MAP(SwitcherSettingsDialog)
   MESSAGE_HANDLER(WM_INITDIALOG, OnInitDialog)
   MESSAGE_HANDLER(WM_CLOSE, OnClose)
+  MESSAGE_HANDLER(kWM_SchemataRefreshed, OnSchemataRefreshed)
   COMMAND_HANDLER(IDC_GET_SCHEMATA, BN_CLICKED, OnGetSchemata)
   COMMAND_ID_HANDLER(IDOK, OnOK)
   NOTIFY_HANDLER(IDC_SCHEMA_LIST, LVN_ITEMCHANGED, OnSchemaListItemChanged)
@@ -31,6 +36,7 @@ class SwitcherSettingsDialog : public CDialogImpl<SwitcherSettingsDialog> {
   LRESULT OnInitDialog(UINT, WPARAM, LPARAM, BOOL&);
   LRESULT OnClose(UINT, WPARAM, LPARAM, BOOL&);
   LRESULT OnGetSchemata(WORD, WORD, HWND, BOOL&);
+  LRESULT OnSchemataRefreshed(UINT, WPARAM, LPARAM, BOOL&);
   LRESULT OnOK(WORD, WORD, HWND, BOOL&);
   LRESULT OnSchemaListItemChanged(int, LPNMHDR, BOOL&);
 
@@ -43,9 +49,11 @@ class SwitcherSettingsDialog : public CDialogImpl<SwitcherSettingsDialog> {
   bool loaded_;
   bool modified_;
   bool embedded_;
+  bool fetching_;
 
   CCheckListViewCtrl schema_list_;
   CStatic description_;
   CEdit hotkeys_;
   CButton get_schemata_;
 };
+

@@ -71,7 +71,7 @@ void GeneralPage::Load() {
 
 bool GeneralPage::Apply() {
   if (!api_ || !settings_ || !modified_)
-    return true;
+    return false;
   if (!api_->load_settings(settings_))
     return false;
 

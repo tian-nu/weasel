@@ -20,7 +20,7 @@ int ReadCurrentMode() {
     return -1;
   std::wstring line;
   while (std::getline(in, line)) {
-    size_t p = line.find(L"switches/1/reset");
+    size_t p = line.find(L"switches/@2/reset");
     if (p == std::wstring::npos)
       continue;
     size_t colon = line.find(L':', p);
@@ -54,7 +54,7 @@ void WritePatch(int mode, int head) {
   std::wofstream out(CustomFilePath().c_str());
   out << L"patch:\n";
   if (mode >= 0) {
-    out << L"  \"switches/1/reset\": " << mode << L"\n";
+    out << L"  \"switches/@2/reset\": " << mode << L"\n";
   }
   if (head > 0) {
     out << L"  \"ai_ranker/head\": " << head << L"\n";
@@ -102,7 +102,7 @@ void AIPage::Load() {
 
 bool AIPage::Apply() {
   if (!modified_)
-    return true;
+    return false;
   int mode = 1;
   if (IsDlgButtonChecked(IDC_AI_MODE_OFF) == BST_CHECKED)
     mode = 0;

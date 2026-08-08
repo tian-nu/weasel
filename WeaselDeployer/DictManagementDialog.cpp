@@ -9,8 +9,12 @@ void static OpenFolderAndSelectItem(std::wstring filepath) {
   filepath = std::filesystem::path(filepath).make_preferred().wstring();
   std::wstring directory = std::filesystem::path(filepath).parent_path();
 
-  HRESULT hr;
-  hr = CoInitializeEx(0, COINIT_MULTITHREADED);
+  // The deployer's UI thread is already STA-initialized (WinMain CoInitialize);
+  // CoInitializeEx(MULTITHREADED) would return RPC_E_CHANGED_MODE without adding
+  // a reference, so a matching CoUninitialize would drop the thread's STA ref
+  // and break COM for the rest of the settings window. Match the apartment.
+  HRESULT hr = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
+  bool com_inited = SUCCEEDED(hr);
 
   auto folder = ILCreateFromPath(directory.c_str());
   std::vector<LPITEMIDLIST> v;
@@ -22,7 +26,8 @@ void static OpenFolderAndSelectItem(std::wstring filepath) {
     ILFree(idl);
   }
   ILFree(folder);
-  CoUninitialize();
+  if (com_inited)
+    CoUninitialize();
 }
 
 template <typename T, typename U>
@@ -33,7 +38,8 @@ inline static std::wstring DoFileDialog(HWND hwndOwner,
                                         LPCWSTR filename,
                                         LPCWSTR defExt) {
   std::wstring path;
-  CoInitialize(NULL);
+  HRESULT com_hr = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
+  bool com_inited = SUCCEEDED(com_hr);
   CComPtr<T> spFileDialog;
   if (SUCCEEDED(spFileDialog.CoCreateInstance(__uuidof(U)))) {
     spFileDialog->SetFileTypes(filterSize, filter);
@@ -53,7 +59,8 @@ inline static std::wstring DoFileDialog(HWND hwndOwner,
       }
     }
   }
-  CoUninitialize();
+  if (com_inited)
+    CoUninitialize();
   return path;
 }
 

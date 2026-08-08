@@ -5,21 +5,26 @@
 #include <set>
 #include <rime_levers_api.h>
 #include <WeaselUtility.h>
+#include <thread>
 #include "WeaselDeployer.h"
 
 SwitcherSettingsDialog::SwitcherSettingsDialog()
-    : settings_(nullptr), loaded_(false), modified_(false), embedded_(false) {
+    : settings_(nullptr), loaded_(false), modified_(false), embedded_(false),
+      fetching_(false) {
   api_ = (RimeLeversApi*)rime_get_api()->find_module("levers")->get_api();
 }
 
 SwitcherSettingsDialog::SwitcherSettingsDialog(RimeSwitcherSettings* settings)
-    : settings_(settings), loaded_(false), modified_(false), embedded_(false) {
+    : settings_(settings), loaded_(false), modified_(false), embedded_(false),
+      fetching_(false) {
   api_ = (RimeLeversApi*)rime_get_api()->find_module("levers")->get_api();
 }
 
 SwitcherSettingsDialog::~SwitcherSettingsDialog() {}
 
 HWND SwitcherSettingsDialog::CreateEmbedded(HWND host) {
+  // set before Create so OnInitDialog can branch on it
+  embedded_ = true;
   HWND hwnd = Create(host);
   if (hwnd) {
     LONG style = ::GetWindowLong(hwnd, GWL_STYLE);
@@ -29,7 +34,6 @@ HWND SwitcherSettingsDialog::CreateEmbedded(HWND host) {
     RECT rc = {0};
     ::GetClientRect(host, &rc);
     ::MoveWindow(hwnd, 0, 0, rc.right, rc.bottom, TRUE);
-    embedded_ = true;
   }
   return hwnd;
 }
@@ -100,8 +104,9 @@ void SwitcherSettingsDialog::ShowDetails(RimeSchemaInfo* info) {
 
 LRESULT SwitcherSettingsDialog::OnInitDialog(UINT, WPARAM, LPARAM, BOOL&) {
   schema_list_.SubclassWindow(GetDlgItem(IDC_SCHEMA_LIST));
-  schema_list_.SetExtendedListViewStyle(LVS_EX_FULLROWSELECT,
-                                        LVS_EX_FULLROWSELECT);
+  schema_list_.SetExtendedListViewStyle(LVS_EX_FULLROWSELECT | LVS_EX_CHECKBOXES,
+                                        LVS_EX_FULLROWSELECT |
+                                            LVS_EX_CHECKBOXES);
 
   CString schema_name;
   schema_name.LoadStringW(IDS_STR_SCHEMA_NAME);
@@ -116,7 +121,14 @@ LRESULT SwitcherSettingsDialog::OnInitDialog(UINT, WPARAM, LPARAM, BOOL&) {
   hotkeys_.EnableWindow(FALSE);
 
   get_schemata_.Attach(GetDlgItem(IDC_GET_SCHEMATA));
-  get_schemata_.EnableWindow(TRUE);
+  get_schemata_.EnableWindow(fetching_ ? FALSE : TRUE);
+
+  // hide the leftover modal OK button when embedded in the settings window;
+  // disabling it also stops Enter from silently re-running DoSave
+  if (embedded_) {
+    ::ShowWindow(GetDlgItem(IDOK), SW_HIDE);
+    ::EnableWindow(GetDlgItem(IDOK), FALSE);
+  }
 
   Populate();
 
@@ -130,49 +142,66 @@ LRESULT SwitcherSettingsDialog::OnClose(UINT, WPARAM, LPARAM, BOOL&) {
   return 0;
 }
 
-LRESULT SwitcherSettingsDialog::OnGetSchemata(WORD, WORD, HWND hWndCtl, BOOL&) {
-  HKEY hKey;
+LRESULT SwitcherSettingsDialog::OnGetSchemata(WORD,
+                                            WORD,
+                                            HWND hWndCtl,
+                                            BOOL&) {
+  if (fetching_)
+    return 0;  // a fetch is already running
+  HKEY hKey = NULL;
   std::wstring hPath;
   if (is_wow64())
     hPath = _T("Software\\WOW6432Node\\Rime\\Weasel");
   else
     hPath = _T("Software\\Rime\\Weasel");
+  std::wstring weasel_root;
   LSTATUS ret = RegOpenKey(HKEY_LOCAL_MACHINE, hPath.c_str(), &hKey);
   if (ret == ERROR_SUCCESS) {
-    WCHAR value[MAX_PATH];
+    WCHAR value[MAX_PATH] = {0};
     DWORD len = sizeof(value);
     DWORD type = 0;
-    DWORD data = 0;
-    ret =
-        RegQueryValueExW(hKey, L"WeaselRoot", NULL, &type, (LPBYTE)value, &len);
-    if (ret == ERROR_SUCCESS && type == REG_SZ) {
-      WCHAR parameters[MAX_PATH + 37];
-      wcscpy_s<_countof(parameters)>(
-          parameters,
-          (std::wstring(L"/k \"") + value + L"\\rime-install.bat\"").c_str());
-      SHELLEXECUTEINFOW cmd = {sizeof(SHELLEXECUTEINFO),
-                               SEE_MASK_NOCLOSEPROCESS | SEE_MASK_NOASYNC,
-                               hWndCtl,
-                               L"open",
-                               L"cmd",
-                               parameters,
-                               NULL,
-                               SW_SHOW,
-                               NULL,
-                               NULL,
-                               NULL,
-                               NULL,
-                               NULL,
-                               NULL,
-                               NULL};
-      ShellExecuteExW(&cmd);
-      WaitForSingleObject(cmd.hProcess, INFINITE);
-      CloseHandle(cmd.hProcess);
-      api_->load_settings(reinterpret_cast<RimeCustomSettings*>(settings_));
-      Populate();
+    if (RegQueryValueExW(hKey, L"WeaselRoot", NULL, &type, (LPBYTE)value,
+                         &len) == ERROR_SUCCESS &&
+        type == REG_SZ) {
+      weasel_root = value;
     }
+    RegCloseKey(hKey);
   }
-  RegCloseKey(hKey);
+  if (weasel_root.empty())
+    return 0;
+  // /c: console auto-closes when the installer finishes. The old code used /k,
+  // which kept the console open and froze the settings window until the user
+  // closed it by hand.
+  std::wstring parameters = L"/c \"" + weasel_root + L"\\rime-install.bat\"";
+  SHELLEXECUTEINFOW cmd = {sizeof(SHELLEXECUTEINFO)};
+  cmd.fMask = SEE_MASK_NOCLOSEPROCESS | SEE_MASK_NOASYNC;
+  cmd.hwnd = hWndCtl;
+  cmd.lpVerb = L"open";
+  cmd.lpFile = L"cmd";
+  cmd.lpParameters = parameters.c_str();
+  cmd.nShow = SW_SHOW;
+  if (!ShellExecuteExW(&cmd) || !cmd.hProcess)
+    return 0;
+  fetching_ = true;
+  get_schemata_.EnableWindow(FALSE);
+  // Wait on a background thread so the settings window stays responsive. The
+  // lambda captures only the window + process handles, never `this`, so a
+  // dialog destroyed before the thread finishes only yields a benign
+  // PostMessage to a dead window.
+  std::thread([hwnd = m_hWnd, hProcess = cmd.hProcess]() {
+    ::WaitForSingleObject(hProcess, INFINITE);
+    ::CloseHandle(hProcess);
+    ::PostMessage(hwnd, kWM_SchemataRefreshed, 0, 0);
+  }).detach();
+  return 0;
+}
+
+LRESULT SwitcherSettingsDialog::OnSchemataRefreshed(UINT, WPARAM, LPARAM, BOOL&) {
+  if (settings_)
+    api_->load_settings(reinterpret_cast<RimeCustomSettings*>(settings_));
+  Populate();
+  fetching_ = false;
+  get_schemata_.EnableWindow(TRUE);
   return 0;
 }
 
@@ -192,13 +221,17 @@ bool SwitcherSettingsDialog::DoSave() {
   if (count == 0) {
     MSG_BY_IDS(IDS_STR_ERR_AT_LEAST_ONE_SEL, IDS_STR_NOT_REGULAR,
                MB_OK | MB_ICONEXCLAMATION);
-    delete selection;
+    delete[] selection;
     return false;
   }
   api_->select_schemas(settings_, selection, count);
-  delete selection;
+  delete[] selection;
+  // select_schemas only mutates the in-memory config; without save_settings the
+  // selection is never written to default.custom.yaml.
+  bool saved =
+      api_->save_settings(reinterpret_cast<RimeCustomSettings*>(settings_));
   modified_ = false;
-  return true;
+  return saved;
 }
 
 LRESULT SwitcherSettingsDialog::OnOK(WORD, WORD code, HWND, BOOL&) {

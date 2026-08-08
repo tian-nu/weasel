@@ -36,6 +36,7 @@ class UIStyleSettingsDialog : public CDialogImpl<UIStyleSettingsDialog> {
   UIStyleSettings* settings_;
   bool loaded_;
   bool embedded_;
+  bool modified_;
   std::vector<ColorSchemeInfo> preset_;
 
   CListBox color_schemes_;

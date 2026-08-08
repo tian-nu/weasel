@@ -5,16 +5,18 @@
 #include <WeaselUtility.h>
 
 UIStyleSettingsDialog::UIStyleSettingsDialog()
-    : settings_(nullptr), loaded_(false), embedded_(false) {}
+    : settings_(nullptr), loaded_(false), embedded_(false), modified_(false) {}
 
 UIStyleSettingsDialog::UIStyleSettingsDialog(UIStyleSettings* settings)
-    : settings_(settings), loaded_(false), embedded_(false) {}
+    : settings_(settings), loaded_(false), embedded_(false), modified_(false) {}
 
 UIStyleSettingsDialog::~UIStyleSettingsDialog() {
   image_.Destroy();
 }
 
 HWND UIStyleSettingsDialog::CreateEmbedded(HWND host) {
+  // set before Create so OnInitDialog can branch on it
+  embedded_ = true;
   HWND hwnd = Create(host);
   if (hwnd) {
     LONG style = ::GetWindowLong(hwnd, GWL_STYLE);
@@ -24,17 +26,27 @@ HWND UIStyleSettingsDialog::CreateEmbedded(HWND host) {
     RECT rc = {0};
     ::GetClientRect(host, &rc);
     ::MoveWindow(hwnd, 0, 0, rc.right, rc.bottom, TRUE);
-    embedded_ = true;
   }
   return hwnd;
 }
-
 bool UIStyleSettingsDialog::Apply() {
-  if (!settings_)
-    return true;
+  if (!settings_ || !modified_)
+    return false;
   RimeLeversApi* api =
       (RimeLeversApi*)rime_get_api()->find_module("levers")->get_api();
-  return api && api->save_settings(settings_->settings());
+  if (!api)
+    return false;
+  // Reload first: the General page may have just written weasel.custom.yaml
+  // for horizontal/tray. Saving this (init-time-loaded) config without
+  // reloading would clobber that change. Re-apply the chosen scheme on the
+  // fresh config, then persist.
+  api->load_settings(settings_->settings());
+  int index = color_schemes_.GetCurSel();
+  if (index >= 0 && index < (int)preset_.size())
+    settings_->SelectColorScheme(preset_[index].color_scheme_id);
+  bool saved = api->save_settings(settings_->settings());
+  modified_ = false;
+  return saved;
 }
 
 void UIStyleSettingsDialog::Populate() {
@@ -50,10 +62,8 @@ void UIStyleSettingsDialog::Populate() {
       active_index = i;
     }
   }
-  if (active_index >= 0) {
-    color_schemes_.SetCurSel(active_index);
-    Preview(active_index);
-  }
+  color_schemes_.SetCurSel(active_index);
+  Preview(active_index);
   loaded_ = true;
 }
 
@@ -63,6 +73,10 @@ LRESULT UIStyleSettingsDialog::OnInitDialog(UINT, WPARAM, LPARAM, BOOL&) {
   select_font_.Attach(GetDlgItem(IDC_SELECT_FONT));
   select_font_.EnableWindow(FALSE);
 
+  if (embedded_) {
+    ::ShowWindow(GetDlgItem(IDOK), SW_HIDE);
+    ::EnableWindow(GetDlgItem(IDOK), FALSE);
+  }
   Populate();
 
   CenterWindow();
@@ -86,6 +100,7 @@ LRESULT UIStyleSettingsDialog::OnColorSchemeSelChange(WORD, WORD, HWND, BOOL&) {
   if (index >= 0 && index < (int)preset_.size()) {
     settings_->SelectColorScheme(preset_[index].color_scheme_id);
     Preview(index);
+    modified_ = true;
   }
   return 0;
 }
