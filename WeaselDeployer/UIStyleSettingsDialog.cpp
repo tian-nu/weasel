@@ -106,7 +106,7 @@ LRESULT UIStyleSettingsDialog::OnSelectFont(WORD, WORD, HWND, BOOL&) {
     return 0;
 
   RimeConfig config = {0};
-  api->settings_get_config(settings_, &config);
+  api->settings_get_config(settings_->settings(), &config);
   RimeApi* rime = rime_get_api();
 
   int point = 14;  // weasel.yaml default
@@ -139,11 +139,12 @@ LRESULT UIStyleSettingsDialog::OnSelectFont(WORD, WORD, HWND, BOOL&) {
   std::string face_name = wtou8(lf.lfFaceName);
   if (face_name.empty())
     return 0;
-  api->customize_string(settings_, "style/font_face", face_name.c_str());
+  api->customize_string(settings_->settings(), "style/font_face",
+                        face_name.c_str());
   int new_point = -MulDiv(lf.lfHeight, 72, ppi);
   if (new_point < 1)
     new_point = point;
-  api->customize_int(settings_, "style/font_point", new_point);
+  api->customize_int(settings_->settings(), "style/font_point", new_point);
   modified_ = true;
   return 0;
 }
