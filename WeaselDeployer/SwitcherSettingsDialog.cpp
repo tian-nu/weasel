@@ -9,13 +9,19 @@
 #include "WeaselDeployer.h"
 
 SwitcherSettingsDialog::SwitcherSettingsDialog()
-    : settings_(nullptr), loaded_(false), modified_(false), embedded_(false),
+    : settings_(nullptr),
+      loaded_(false),
+      modified_(false),
+      embedded_(false),
       fetching_(false) {
   api_ = (RimeLeversApi*)rime_get_api()->find_module("levers")->get_api();
 }
 
 SwitcherSettingsDialog::SwitcherSettingsDialog(RimeSwitcherSettings* settings)
-    : settings_(settings), loaded_(false), modified_(false), embedded_(false),
+    : settings_(settings),
+      loaded_(false),
+      modified_(false),
+      embedded_(false),
       fetching_(false) {
   api_ = (RimeLeversApi*)rime_get_api()->find_module("levers")->get_api();
 }
@@ -104,9 +110,9 @@ void SwitcherSettingsDialog::ShowDetails(RimeSchemaInfo* info) {
 
 LRESULT SwitcherSettingsDialog::OnInitDialog(UINT, WPARAM, LPARAM, BOOL&) {
   schema_list_.SubclassWindow(GetDlgItem(IDC_SCHEMA_LIST));
-  schema_list_.SetExtendedListViewStyle(LVS_EX_FULLROWSELECT | LVS_EX_CHECKBOXES,
-                                        LVS_EX_FULLROWSELECT |
-                                            LVS_EX_CHECKBOXES);
+  schema_list_.SetExtendedListViewStyle(
+      LVS_EX_FULLROWSELECT | LVS_EX_CHECKBOXES,
+      LVS_EX_FULLROWSELECT | LVS_EX_CHECKBOXES);
 
   CString schema_name;
   schema_name.LoadStringW(IDS_STR_SCHEMA_NAME);
@@ -142,10 +148,7 @@ LRESULT SwitcherSettingsDialog::OnClose(UINT, WPARAM, LPARAM, BOOL&) {
   return 0;
 }
 
-LRESULT SwitcherSettingsDialog::OnGetSchemata(WORD,
-                                            WORD,
-                                            HWND hWndCtl,
-                                            BOOL&) {
+LRESULT SwitcherSettingsDialog::OnGetSchemata(WORD, WORD, HWND hWndCtl, BOOL&) {
   if (fetching_)
     return 0;  // a fetch is already running
   HKEY hKey = NULL;
@@ -196,7 +199,10 @@ LRESULT SwitcherSettingsDialog::OnGetSchemata(WORD,
   return 0;
 }
 
-LRESULT SwitcherSettingsDialog::OnSchemataRefreshed(UINT, WPARAM, LPARAM, BOOL&) {
+LRESULT SwitcherSettingsDialog::OnSchemataRefreshed(UINT,
+                                                    WPARAM,
+                                                    LPARAM,
+                                                    BOOL&) {
   if (settings_)
     api_->load_settings(reinterpret_cast<RimeCustomSettings*>(settings_));
   Populate();

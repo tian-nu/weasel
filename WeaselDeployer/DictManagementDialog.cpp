@@ -10,9 +10,10 @@ void static OpenFolderAndSelectItem(std::wstring filepath) {
   std::wstring directory = std::filesystem::path(filepath).parent_path();
 
   // The deployer's UI thread is already STA-initialized (WinMain CoInitialize);
-  // CoInitializeEx(MULTITHREADED) would return RPC_E_CHANGED_MODE without adding
-  // a reference, so a matching CoUninitialize would drop the thread's STA ref
-  // and break COM for the rest of the settings window. Match the apartment.
+  // CoInitializeEx(MULTITHREADED) would return RPC_E_CHANGED_MODE without
+  // adding a reference, so a matching CoUninitialize would drop the thread's
+  // STA ref and break COM for the rest of the settings window. Match the
+  // apartment.
   HRESULT hr = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
   bool com_inited = SUCCEEDED(hr);
 

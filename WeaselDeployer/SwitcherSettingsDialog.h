@@ -4,7 +4,8 @@
 #include "resource.h"
 #include <rime_levers_api.h>
 
-// custom message posted by the background wait thread after rime-install finishes
+// custom message posted by the background wait thread after rime-install
+// finishes
 const UINT kWM_SchemataRefreshed = WM_APP + 100;
 
 class SwitcherSettingsDialog : public CDialogImpl<SwitcherSettingsDialog> {
@@ -56,4 +57,3 @@ class SwitcherSettingsDialog : public CDialogImpl<SwitcherSettingsDialog> {
   CEdit hotkeys_;
   CButton get_schemata_;
 };
-
