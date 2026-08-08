@@ -17,6 +17,7 @@ class GeneralPage : public CDialogImpl<GeneralPage> {
   COMMAND_ID_HANDLER(IDC_RADIO_HORIZONTAL, OnLayoutChanged)
   COMMAND_ID_HANDLER(IDC_RADIO_VERTICAL, OnLayoutChanged)
   COMMAND_ID_HANDLER(IDC_CHECK_TRAY_ICON, OnTrayIconChanged)
+  COMMAND_ID_HANDLER(IDC_PAGE_SIZE, OnPageSizeChanged)
   END_MSG_MAP()
 
   // loads current values; call once after creation
@@ -29,8 +30,10 @@ class GeneralPage : public CDialogImpl<GeneralPage> {
   LRESULT OnClose(UINT, WPARAM, LPARAM, BOOL&);
   LRESULT OnLayoutChanged(WORD, WORD, HWND, BOOL&);
   LRESULT OnTrayIconChanged(WORD, WORD, HWND, BOOL&);
+  LRESULT OnPageSizeChanged(WORD, WORD, HWND, BOOL&);
 
   RimeLeversApi* api_;
   RimeCustomSettings* settings_;
+  RimeCustomSettings* default_settings_;
   bool modified_;
 };

@@ -82,6 +82,11 @@ LRESULT AIPage::OnModeChanged(WORD, WORD, HWND, BOOL&) {
   return 0;
 }
 
+LRESULT AIPage::OnHeadChanged(WORD, WORD, HWND, BOOL&) {
+  modified_ = true;
+  return 0;
+}
+
 void AIPage::Load() {
   // mode: schema default is reset: 1 (AI hybrid); a custom file overrides it.
   int mode = ReadCurrentMode();

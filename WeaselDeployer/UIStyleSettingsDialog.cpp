@@ -3,6 +3,7 @@
 #include "UIStyleSettings.h"
 #include "Configurator.h"
 #include <WeaselUtility.h>
+#include <commdlg.h>
 
 UIStyleSettingsDialog::UIStyleSettingsDialog()
     : settings_(nullptr), loaded_(false), embedded_(false), modified_(false) {}
@@ -71,7 +72,6 @@ LRESULT UIStyleSettingsDialog::OnInitDialog(UINT, WPARAM, LPARAM, BOOL&) {
   color_schemes_.Attach(GetDlgItem(IDC_COLOR_SCHEME));
   preview_.Attach(GetDlgItem(IDC_PREVIEW));
   select_font_.Attach(GetDlgItem(IDC_SELECT_FONT));
-  select_font_.EnableWindow(FALSE);
 
   if (embedded_) {
     ::ShowWindow(GetDlgItem(IDOK), SW_HIDE);
@@ -92,6 +92,59 @@ LRESULT UIStyleSettingsDialog::OnClose(UINT, WPARAM, LPARAM, BOOL&) {
 LRESULT UIStyleSettingsDialog::OnOK(WORD, WORD code, HWND, BOOL&) {
   if (!embedded_)
     EndDialog(code);
+  return 0;
+}
+
+// pick a font for the candidate window; persists style/font_face and
+// style/font_point to weasel.custom.yaml
+LRESULT UIStyleSettingsDialog::OnSelectFont(WORD, WORD, HWND, BOOL&) {
+  if (!settings_)
+    return 0;
+  RimeLeversApi* api =
+      (RimeLeversApi*)rime_get_api()->find_module("levers")->get_api();
+  if (!api)
+    return 0;
+
+  RimeConfig config = {0};
+  api->settings_get_config(settings_, &config);
+  RimeApi* rime = rime_get_api();
+
+  int point = 14;  // weasel.yaml default
+  rime->config_get_int(&config, "style/font_point", &point);
+  const char* face = rime->config_get_cstring(&config, "style/font_face");
+
+  HDC dc = ::GetDC(NULL);
+  int ppi = dc ? ::GetDeviceCaps(dc, LOGPIXELSY) : 96;
+  if (dc)
+    ::ReleaseDC(NULL, dc);
+
+  LOGFONT lf = {0};
+  lf.lfHeight = -MulDiv(point, ppi, 72);
+  lf.lfWeight = FW_NORMAL;
+  wcscpy_s(lf.lfFaceName, L"Microsoft YaHei");
+  if (face) {
+    std::wstring face_name = u8tow(face);
+    if (!face_name.empty())
+      wcscpy_s(lf.lfFaceName, face_name.c_str());
+  }
+
+  CHOOSEFONT cf = {sizeof(cf)};
+  cf.hwndOwner = m_hWnd;
+  cf.lpLogFont = &lf;
+  cf.Flags = CF_SCREENFONTS | CF_INITTOLOGFONTSTRUCT | CF_NOSCRIPTSEL |
+             CF_FORCEFONTEXIST;
+  if (!::ChooseFont(&cf))
+    return 0;
+
+  std::string face_name = wtou8(lf.lfFaceName);
+  if (face_name.empty())
+    return 0;
+  api->customize_string(settings_, "style/font_face", face_name.c_str());
+  int new_point = -MulDiv(lf.lfHeight, 72, ppi);
+  if (new_point < 1)
+    new_point = point;
+  api->customize_int(settings_, "style/font_point", new_point);
+  modified_ = true;
   return 0;
 }
 

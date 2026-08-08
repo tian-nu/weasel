@@ -20,6 +20,21 @@ HWND EmbedChild(HWND hwnd, HWND host) {
   return hwnd;
 }
 
+// larger, semibold font for the owner-drawn navigation list
+HFONT CreateNavFont(HWND nav) {
+  LOGFONT lf = {0};
+  HFONT base = (HFONT)::SendMessage(nav, WM_GETFONT, 0, 0);
+  if (base)
+    ::GetObject(base, sizeof(lf), &lf);
+  HDC dc = ::GetDC(NULL);
+  int ppi = dc ? ::GetDeviceCaps(dc, LOGPIXELSY) : 96;
+  if (dc)
+    ::ReleaseDC(NULL, dc);
+  lf.lfHeight = -MulDiv(13, ppi, 72);  // 13pt, slightly larger than the dialog
+  lf.lfWeight = FW_SEMIBOLD;
+  return ::CreateFontIndirect(&lf);
+}
+
 }  // namespace
 
 SettingsDialog::SettingsDialog(RimeSwitcherSettings* switcher_settings,
@@ -29,15 +44,33 @@ SettingsDialog::SettingsDialog(RimeSwitcherSettings* switcher_settings,
       ui_style_settings_(ui_style_settings),
       current_page_(0),
       initial_page_(initial_page),
-      modified_(false) {
+      modified_(false),
+      nav_font_(nullptr) {
   page_windows_[0] = page_windows_[1] = page_windows_[2] = page_windows_[3] =
       page_windows_[4] = NULL;
 }
 
-SettingsDialog::~SettingsDialog() {}
+SettingsDialog::~SettingsDialog() {
+  if (nav_font_)
+    ::DeleteObject(nav_font_);
+}
 
 LRESULT SettingsDialog::OnInitDialog(UINT, WPARAM, LPARAM, BOOL&) {
   HWND nav = GetDlgItem(IDC_NAV_LIST);
+  // owner-draw styling: bigger semibold font + comfortable row height
+  nav_font_ = CreateNavFont(nav);
+  if (nav_font_) {
+    ::SendMessage(nav, WM_SETFONT, (WPARAM)nav_font_, TRUE);
+    HDC dc = ::GetDC(nav);
+    if (dc) {
+      HFONT old = (HFONT)::SelectObject(dc, nav_font_);
+      TEXTMETRIC tm = {0};
+      if (::GetTextMetrics(dc, &tm))
+        ::SendMessage(nav, LB_SETITEMHEIGHT, 0, tm.tmHeight + 12);
+      ::SelectObject(dc, old);
+      ::ReleaseDC(nav, dc);
+    }
+  }
   // page titles; order must match ShowPage()
   const wchar_t* titles[] = {L"常规", L"界面", L"输入方案", L"词典",
                              L"AI 功能"};
@@ -75,6 +108,43 @@ LRESULT SettingsDialog::OnInitDialog(UINT, WPARAM, LPARAM, BOOL&) {
 LRESULT SettingsDialog::OnClose(UINT, WPARAM, LPARAM, BOOL&) {
   EndDialog(IDCANCEL);
   return 0;
+}
+
+// owner-draw painting for the navigation list: full-row selection highlight,
+// vertically centered text, inactive-selection treated like a classic
+// unfocused listbox.
+LRESULT SettingsDialog::OnDrawItem(UINT, WPARAM, LPARAM lParam, BOOL&) {
+  LPDRAWITEMSTRUCT dis = reinterpret_cast<LPDRAWITEMSTRUCT>(lParam);
+  if (!dis || dis->CtlID != IDC_NAV_LIST || dis->itemID == (UINT)-1)
+    return 0;
+  HDC dc = dis->hDC;
+  RECT rc = dis->rcItem;
+  bool selected = (dis->itemState & ODS_SELECTED) != 0;
+  bool focused = ::GetFocus() == dis->hwndItem;
+  COLORREF bg = selected ? GetSysColor(focused ? COLOR_HIGHLIGHT : COLOR_3DFACE)
+                         : GetSysColor(COLOR_WINDOW);
+  COLORREF fg = selected
+                    ? GetSysColor(focused ? COLOR_HIGHLIGHTTEXT : COLOR_BTNTEXT)
+                    : GetSysColor(COLOR_WINDOWTEXT);
+  HBRUSH brush = ::CreateSolidBrush(bg);
+  ::FillRect(dc, &rc, brush);
+  ::DeleteObject(brush);
+
+  wchar_t text[128] = {0};
+  ::SendMessage(dis->hwndItem, LB_GETTEXT, dis->itemID, (LPARAM)text);
+  RECT rcText = rc;
+  rcText.left += 12;
+  rcText.right -= 8;
+  HFONT old = (HFONT)::SelectObject(
+      dc, nav_font_ ? nav_font_ : (HFONT)::GetStockObject(DEFAULT_GUI_FONT));
+  ::SetBkMode(dc, TRANSPARENT);
+  ::SetTextColor(dc, fg);
+  ::DrawText(dc, text, -1, &rcText,
+             DT_LEFT | DT_VCENTER | DT_SINGLELINE | DT_END_ELLIPSIS);
+  ::SelectObject(dc, old);
+  if (selected && focused)
+    ::DrawFocusRect(dc, &dis->rcItem);
+  return TRUE;
 }
 
 LRESULT SettingsDialog::OnNavSelChange(WORD, WORD, HWND, BOOL&) {

@@ -25,6 +25,7 @@ class SettingsDialog : public CDialogImpl<SettingsDialog> {
   BEGIN_MSG_MAP(SettingsDialog)
   MESSAGE_HANDLER(WM_INITDIALOG, OnInitDialog)
   MESSAGE_HANDLER(WM_CLOSE, OnClose)
+  MESSAGE_HANDLER(WM_DRAWITEM, OnDrawItem)
   COMMAND_ID_HANDLER(IDOK, OnOK)
   COMMAND_ID_HANDLER(IDCANCEL, OnCancel)
   COMMAND_HANDLER(IDC_NAV_LIST, LBN_SELCHANGE, OnNavSelChange)
@@ -32,6 +33,7 @@ class SettingsDialog : public CDialogImpl<SettingsDialog> {
 
   LRESULT OnInitDialog(UINT, WPARAM, LPARAM, BOOL&);
   LRESULT OnClose(UINT, WPARAM, LPARAM, BOOL&);
+  LRESULT OnDrawItem(UINT, WPARAM, LPARAM, BOOL&);
   LRESULT OnOK(WORD, WORD, HWND, BOOL&);
   LRESULT OnCancel(WORD, WORD, HWND, BOOL&);
   LRESULT OnNavSelChange(WORD, WORD, HWND, BOOL&);
@@ -49,6 +51,7 @@ class SettingsDialog : public CDialogImpl<SettingsDialog> {
   DictManagementDialog dict_;
 
   HWND page_windows_[5];
+  HFONT nav_font_;
   int current_page_;
   int initial_page_;
   bool modified_;

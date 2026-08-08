@@ -17,6 +17,7 @@ class AIPage : public CDialogImpl<AIPage> {
   COMMAND_ID_HANDLER(IDC_AI_MODE_OFF, OnModeChanged)
   COMMAND_ID_HANDLER(IDC_AI_MODE_HYBRID, OnModeChanged)
   COMMAND_ID_HANDLER(IDC_AI_MODE_PURE, OnModeChanged)
+  COMMAND_ID_HANDLER(IDC_AI_HEAD, OnHeadChanged)
   END_MSG_MAP()
 
   void Load();
@@ -26,6 +27,7 @@ class AIPage : public CDialogImpl<AIPage> {
   LRESULT OnInitDialog(UINT, WPARAM, LPARAM, BOOL&);
   LRESULT OnClose(UINT, WPARAM, LPARAM, BOOL&);
   LRESULT OnModeChanged(WORD, WORD, HWND, BOOL&);
+  LRESULT OnHeadChanged(WORD, WORD, HWND, BOOL&);
 
   bool modified_;
 };

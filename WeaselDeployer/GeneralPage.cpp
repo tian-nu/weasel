@@ -3,22 +3,43 @@
 #include <WeaselUtility.h>
 #include <rime_api.h>
 #include <rime_levers_api.h>
+#include <fstream>
 #pragma warning(disable : 4005)
 #include "WeaselDeployer.h"
 
+namespace {
+
+// path of default.custom.yaml under the user data dir
+std::wstring DefaultCustomFilePath() {
+  return WeaselUserDataPath() / L"default.custom.yaml";
+}
+
+}  // namespace
+
 GeneralPage::GeneralPage()
-    : api_(nullptr), settings_(nullptr), modified_(false) {
+    : api_(nullptr),
+      settings_(nullptr),
+      default_settings_(nullptr),
+      modified_(false) {
   RimeApi* rime = rime_get_api();
   RimeModule* levers = rime->find_module("levers");
   if (levers) {
     api_ = (RimeLeversApi*)levers->get_api();
     settings_ = api_->custom_settings_init("weasel", "Weasel::GeneralPage");
+    // "default" custom settings own the global menu/page_size patch; using the
+    // API (load -> customize -> save) preserves other patches such as the
+    // schema_list written by the schemes page.
+    default_settings_ =
+        api_->custom_settings_init("default", "Weasel::GeneralPage");
   }
 }
 
 GeneralPage::~GeneralPage() {
   if (api_ && settings_) {
     api_->custom_settings_destroy(settings_);
+  }
+  if (api_ && default_settings_) {
+    api_->custom_settings_destroy(default_settings_);
   }
 }
 
@@ -38,6 +59,11 @@ LRESULT GeneralPage::OnLayoutChanged(WORD, WORD, HWND, BOOL&) {
 }
 
 LRESULT GeneralPage::OnTrayIconChanged(WORD, WORD, HWND, BOOL&) {
+  modified_ = true;
+  return 0;
+}
+
+LRESULT GeneralPage::OnPageSizeChanged(WORD, WORD, HWND, BOOL&) {
   modified_ = true;
   return 0;
 }
@@ -66,6 +92,28 @@ void GeneralPage::Load() {
     tray_icon = tray_icon_value != 0;
   CheckDlgButton(IDC_CHECK_TRAY_ICON, tray_icon ? BST_CHECKED : BST_UNCHECKED);
 
+  // menu/page_size lives in the default.custom.yaml patch (settings_get_config
+  // only exposes the base default.yaml, not the patch), so read it directly.
+  int page_size = 7;  // Configurator seeds this on first run
+  std::wifstream in(DefaultCustomFilePath().c_str());
+  if (in) {
+    std::wstring line;
+    while (std::getline(in, line)) {
+      size_t p = line.find(L"page_size");
+      if (p == std::wstring::npos)
+        continue;
+      size_t colon = line.find(L':', p);
+      if (colon == std::wstring::npos)
+        continue;
+      page_size = _wtoi(line.substr(colon + 1).c_str());
+    }
+  }
+  if (page_size < 1 || page_size > 20)
+    page_size = 7;
+  WCHAR buf[16] = {0};
+  _itow_s(page_size, buf, 10);
+  SetDlgItemTextW(IDC_PAGE_SIZE, buf);
+
   modified_ = false;
 }
 
@@ -80,6 +128,17 @@ bool GeneralPage::Apply() {
 
   bool tray_icon = IsDlgButtonChecked(IDC_CHECK_TRAY_ICON) == BST_CHECKED;
   api_->customize_bool(settings_, "style/display_tray_icon", tray_icon);
+
+  int page_size = GetDlgItemInt(IDC_PAGE_SIZE, NULL, FALSE);
+  if (page_size < 1)
+    page_size = 1;
+  if (page_size > 20)
+    page_size = 20;
+  if (default_settings_) {
+    api_->load_settings(default_settings_);
+    api_->customize_int(default_settings_, "menu/page_size", page_size);
+    api_->save_settings(default_settings_);
+  }
 
   modified_ = false;
   return api_->save_settings(settings_);
