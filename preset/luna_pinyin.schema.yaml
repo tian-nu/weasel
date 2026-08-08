@@ -26,7 +26,6 @@ switches:
     states: [ 半角, 全角 ]
   - options:
     reset: 1
-    reset: 1
       - zh_hant
       - zh_hans
       - zh_hant_hk
