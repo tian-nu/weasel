@@ -139,12 +139,18 @@ jobs:
             Set-Content $schema $c -Encoding UTF8 -NoNewline
             Write-Host "patched luna_pinyin.schema.yaml: default zh_hans"
           }
-          # opencc data for the simplifier, taken from the downloaded librime deps
-          $ocd = Get-ChildItem -Path output -Recurse -Filter '*.ocd2' -ErrorAction SilentlyContinue | Select-Object -First 1
-          if ($ocd) {
-            New-Item -ItemType Directory -Force -Path 'output\data\opencc' | Out-Null
-            Copy-Item "$($ocd.DirectoryName)\*" 'output\data\opencc\' -Force
-            Write-Host "opencc data copied from $($ocd.DirectoryName)"
+          # opencc data for the simplifier: get-rime already unpacks it into
+          # output\data\opencc; only copy if missing.
+          $have = Get-ChildItem -Path 'output\data\opencc' -Filter '*.ocd2' -ErrorAction SilentlyContinue | Select-Object -First 1
+          if (-not $have) {
+            $ocd = Get-ChildItem -Path output -Recurse -Filter '*.ocd2' -ErrorAction SilentlyContinue | Select-Object -First 1
+            if ($ocd) {
+              New-Item -ItemType Directory -Force -Path 'output\data\opencc' | Out-Null
+              Copy-Item "$($ocd.DirectoryName)\*" 'output\data\opencc\' -Force
+              Write-Host "opencc data copied from $($ocd.DirectoryName)"
+            }
+          } else {
+            Write-Host "opencc data already present in output\data\opencc"
           }
 
       - name: Setup xmake
