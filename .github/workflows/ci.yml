@@ -134,10 +134,18 @@ jobs:
           # which leaves output as the dictionary's mixed-script originals.
           $schema = 'output\data\luna_pinyin.schema.yaml'
           if (Test-Path $schema) {
-            $c = Get-Content $schema -Raw -Encoding UTF8
-            $c = $c -replace '(?m)^(\s+- options:)$', "`$1`n    reset: 1"
-            Set-Content $schema $c -Encoding UTF8 -NoNewline
-            Write-Host "patched luna_pinyin.schema.yaml: default zh_hans"
+            $lines = Get-Content $schema -Encoding UTF8
+            $out = New-Object System.Collections.Generic.List[string]
+            $patched = $false
+            foreach ($line in $lines) {
+              $out.Add($line)
+              if (-not $patched -and $line -match '^\s+- options:$') {
+                $out.Add('    reset: 1')
+                $patched = $true
+              }
+            }
+            Set-Content $schema $out -Encoding UTF8
+            Write-Host "patched luna_pinyin.schema.yaml: default zh_hans ($patched)"
           }
           # opencc data for the simplifier: get-rime already unpacks it into
           # output\data\opencc; only copy if missing.
