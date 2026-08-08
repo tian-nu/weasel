@@ -124,9 +124,28 @@ jobs:
 
       - name: Build data
         shell: pwsh
+        env:
+          WEASEL_BUNDLED_RECIPES: ':preset'
         run: |
           $ErrorActionPreference = 'Stop'
           .\build.bat data
+          # Default simplified output: activate zh_hans (simplifier) on first run.
+          # The luna_pinyin schema ships a han/hant radio group with no reset,
+          # which leaves output as the dictionary's mixed-script originals.
+          $schema = 'output\data\luna_pinyin.schema.yaml'
+          if (Test-Path $schema) {
+            $c = Get-Content $schema -Raw -Encoding UTF8
+            $c = $c -replace '(?m)^(\s+- options:)$', "`$1`n    reset: 1"
+            Set-Content $schema $c -Encoding UTF8 -NoNewline
+            Write-Host "patched luna_pinyin.schema.yaml: default zh_hans"
+          }
+          # opencc data for the simplifier, taken from the downloaded librime deps
+          $ocd = Get-ChildItem -Path output -Recurse -Filter '*.ocd2' -ErrorAction SilentlyContinue | Select-Object -First 1
+          if ($ocd) {
+            New-Item -ItemType Directory -Force -Path 'output\data\opencc' | Out-Null
+            Copy-Item "$($ocd.DirectoryName)\*" 'output\data\opencc\' -Force
+            Write-Host "opencc data copied from $($ocd.DirectoryName)"
+          }
 
       - name: Setup xmake
         if: matrix.variant == 'xmake'
