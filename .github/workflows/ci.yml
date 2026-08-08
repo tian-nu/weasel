@@ -129,23 +129,13 @@ jobs:
         run: |
           $ErrorActionPreference = 'Stop'
           .\build.bat data
-          # Default simplified output: activate zh_hans (simplifier) on first run.
-          # The luna_pinyin schema ships a han/hant radio group with no reset,
-          # which leaves output as the dictionary's mixed-script originals.
-          $schema = 'output\data\luna_pinyin.schema.yaml'
-          if (Test-Path $schema) {
-            $lines = Get-Content $schema -Encoding UTF8
-            $out = New-Object System.Collections.Generic.List[string]
-            $patched = $false
-            foreach ($line in $lines) {
-              $out.Add($line)
-              if (-not $patched -and $line -match '^\s+- options:$') {
-                $out.Add('    reset: 1')
-                $patched = $true
-              }
-            }
-            Set-Content $schema $out -Encoding UTF8
-            Write-Host "patched luna_pinyin.schema.yaml: default zh_hans ($patched)"
+          # Default simplified output: our bundled schema activates zh_hans
+          # (simplifier) on first run. The stock luna_pinyin schema ships a
+          # han/hant radio group with no reset, leaving output as the
+          # dictionary's mixed-script originals.
+          if (Test-Path 'preset\luna_pinyin.schema.yaml') {
+            Copy-Item 'preset\luna_pinyin.schema.yaml' 'output\data\luna_pinyin.schema.yaml' -Force
+            Write-Host 'using bundled luna_pinyin.schema.yaml (default zh_hans)'
           }
           # opencc data for the simplifier: get-rime already unpacks it into
           # output\data\opencc; only copy if missing.
