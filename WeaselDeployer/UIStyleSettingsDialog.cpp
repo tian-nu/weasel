@@ -4,6 +4,7 @@
 #include "Configurator.h"
 #include <WeaselUtility.h>
 #include <commdlg.h>
+#pragma comment(lib, "comdlg32.lib")
 
 UIStyleSettingsDialog::UIStyleSettingsDialog()
     : settings_(nullptr), loaded_(false), embedded_(false), modified_(false) {}
