@@ -1,4 +1,4 @@
-﻿; weasel installation script
+; weasel installation script
 !include FileFunc.nsh
 !include LogicLib.nsh
 !include MUI2.nsh
@@ -284,6 +284,9 @@ program_files:
   File "data\*.yaml"
   File /nonfatal "data\*.txt"
   File /nonfatal "data\*.gram"
+  ; simplified-Chinese dictionary (fog cn_dicts)
+  SetOutPath $INSTDIR\data\cn_dicts
+  File "data\cn_dicts\*.yaml"
   ; opencc data files
   SetOutPath $INSTDIR\data\opencc
   File "data\opencc\*.json"
