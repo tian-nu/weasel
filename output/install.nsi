@@ -147,10 +147,11 @@ skip:
   "UninstallString"
   StrCmp $R0 "" done
 
+  ; Automatic upgrade: silently remove the previous weasel installation
+  ; (this product's own files and registry keys only; the user data dir
+  ; %AppData%\Rime and any other input method are never touched).
   StrCpy $0 "Upgrade"
-  IfSilent uninst 0
-  MessageBox MB_OKCANCEL|MB_ICONINFORMATION "$(CONFIRMATION)" IDOK uninst
-  Abort
+  Goto uninst
 
 uninst:
   ; Backup data directory from previous installation, user files may exist
@@ -187,8 +188,7 @@ call_uninstaller:
   SetShellVarContext all
   Delete  "$SMPROGRAMS\$(DISPLAYNAME)\*.*"
   RMDir  "$SMPROGRAMS\$(DISPLAYNAME)"
-  ; Prompt reboot
-  SetRebootFlag true
+  ; give the file system a moment to release handles
   Sleep 800
 
 done:

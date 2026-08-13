@@ -46,6 +46,13 @@ bool UIStyleSettingsDialog::Apply() {
   int index = color_schemes_.GetCurSel();
   if (index >= 0 && index < (int)preset_.size())
     settings_->SelectColorScheme(preset_[index].color_scheme_id);
+  // candidate font size shares style/font_point with the font picker
+  int point = GetDlgItemInt(IDC_FONT_POINT, NULL, FALSE);
+  if (point < 8)
+    point = 8;
+  if (point > 40)
+    point = 40;
+  api->customize_int(settings_->settings(), "style/font_point", point);
   bool saved = api->save_settings(settings_->settings());
   modified_ = false;
   return saved;
@@ -73,6 +80,20 @@ LRESULT UIStyleSettingsDialog::OnInitDialog(UINT, WPARAM, LPARAM, BOOL&) {
   color_schemes_.Attach(GetDlgItem(IDC_COLOR_SCHEME));
   preview_.Attach(GetDlgItem(IDC_PREVIEW));
   select_font_.Attach(GetDlgItem(IDC_SELECT_FONT));
+
+  if (settings_) {
+    RimeLeversApi* api =
+        (RimeLeversApi*)rime_get_api()->find_module("levers")->get_api();
+    if (api) {
+      RimeConfig config = {0};
+      api->settings_get_config(settings_->settings(), &config);
+      int point = 14;  // weasel.yaml default
+      rime_get_api()->config_get_int(&config, "style/font_point", &point);
+      WCHAR buf[16] = {0};
+      _itow_s(point, buf, 10);
+      SetDlgItemTextW(IDC_FONT_POINT, buf);
+    }
+  }
 
   if (embedded_) {
     ::ShowWindow(GetDlgItem(IDOK), SW_HIDE);
@@ -146,6 +167,11 @@ LRESULT UIStyleSettingsDialog::OnSelectFont(WORD, WORD, HWND, BOOL&) {
   if (new_point < 1)
     new_point = point;
   api->customize_int(settings_->settings(), "style/font_point", new_point);
+  modified_ = true;
+  return 0;
+}
+
+LRESULT UIStyleSettingsDialog::OnFontPointChanged(WORD, WORD, HWND, BOOL&) {
   modified_ = true;
   return 0;
 }

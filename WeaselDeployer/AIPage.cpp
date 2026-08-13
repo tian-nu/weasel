@@ -102,6 +102,8 @@ void AIPage::Load() {
   WCHAR buf[16] = {0};
   _itow_s(head, buf, 10);
   SetDlgItemTextW(IDC_AI_HEAD, buf);
+  std::wstring model_path = WeaselUserDataPath() / L"ai" / L"model.lmbin";
+  SetDlgItemTextW(IDC_AI_MODEL_PATH, model_path.c_str());
   modified_ = false;
 }
 

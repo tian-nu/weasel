@@ -23,6 +23,7 @@ class UIStyleSettingsDialog : public CDialogImpl<UIStyleSettingsDialog> {
   MESSAGE_HANDLER(WM_CLOSE, OnClose)
   COMMAND_ID_HANDLER(IDOK, OnOK)
   COMMAND_ID_HANDLER(IDC_SELECT_FONT, OnSelectFont)
+  COMMAND_ID_HANDLER(IDC_FONT_POINT, OnFontPointChanged)
   COMMAND_HANDLER(IDC_COLOR_SCHEME, LBN_SELCHANGE, OnColorSchemeSelChange)
   END_MSG_MAP()
 
@@ -30,6 +31,7 @@ class UIStyleSettingsDialog : public CDialogImpl<UIStyleSettingsDialog> {
   LRESULT OnClose(UINT, WPARAM, LPARAM, BOOL&);
   LRESULT OnOK(WORD, WORD code, HWND, BOOL&);
   LRESULT OnSelectFont(WORD, WORD, HWND, BOOL&);
+  LRESULT OnFontPointChanged(WORD, WORD, HWND, BOOL&);
   LRESULT OnColorSchemeSelChange(WORD, WORD, HWND, BOOL&);
 
   void Populate();

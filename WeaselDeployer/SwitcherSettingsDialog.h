@@ -31,6 +31,7 @@ class SwitcherSettingsDialog : public CDialogImpl<SwitcherSettingsDialog> {
   MESSAGE_HANDLER(kWM_SchemataRefreshed, OnSchemataRefreshed)
   COMMAND_HANDLER(IDC_GET_SCHEMATA, BN_CLICKED, OnGetSchemata)
   COMMAND_ID_HANDLER(IDOK, OnOK)
+  COMMAND_ID_HANDLER(IDC_HOTKEYS, OnHotkeysChanged)
   NOTIFY_HANDLER(IDC_SCHEMA_LIST, LVN_ITEMCHANGED, OnSchemaListItemChanged)
   END_MSG_MAP()
 
@@ -39,6 +40,7 @@ class SwitcherSettingsDialog : public CDialogImpl<SwitcherSettingsDialog> {
   LRESULT OnGetSchemata(WORD, WORD, HWND, BOOL&);
   LRESULT OnSchemataRefreshed(UINT, WPARAM, LPARAM, BOOL&);
   LRESULT OnOK(WORD, WORD, HWND, BOOL&);
+  LRESULT OnHotkeysChanged(WORD, WORD, HWND, BOOL&);
   LRESULT OnSchemaListItemChanged(int, LPNMHDR, BOOL&);
 
   void Populate();

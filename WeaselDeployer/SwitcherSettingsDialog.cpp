@@ -124,7 +124,9 @@ LRESULT SwitcherSettingsDialog::OnInitDialog(UINT, WPARAM, LPARAM, BOOL&) {
   description_.Attach(GetDlgItem(IDC_SCHEMA_DESCRIPTION));
 
   hotkeys_.Attach(GetDlgItem(IDC_HOTKEYS));
-  hotkeys_.EnableWindow(FALSE);
+  // schema hotkeys (Ctrl+` menu) are editable: format like
+  // "Control+grave, Control+Shift+grave, F4"
+  hotkeys_.EnableWindow(TRUE);
 
   get_schemata_.Attach(GetDlgItem(IDC_GET_SCHEMATA));
   get_schemata_.EnableWindow(fetching_ ? FALSE : TRUE);
@@ -232,6 +234,13 @@ bool SwitcherSettingsDialog::DoSave() {
   }
   api_->select_schemas(settings_, selection, count);
   delete[] selection;
+  // persist the schema-menu hotkeys if the user edited them
+  CString hotkeys_text;
+  hotkeys_.GetWindowText(hotkeys_text);
+  if (!hotkeys_text.IsEmpty()) {
+    std::string hotkeys_utf8 = wtou8(hotkeys_text.GetString());
+    api_->set_hotkeys(settings_, hotkeys_utf8.c_str());
+  }
   // select_schemas only mutates the in-memory config; without save_settings the
   // selection is never written to default.custom.yaml.
   bool saved =
@@ -244,6 +253,11 @@ LRESULT SwitcherSettingsDialog::OnOK(WORD, WORD code, HWND, BOOL&) {
   DoSave();
   if (!embedded_)
     EndDialog(code);
+  return 0;
+}
+
+LRESULT SwitcherSettingsDialog::OnHotkeysChanged(WORD, WORD, HWND, BOOL&) {
+  modified_ = true;
   return 0;
 }
 
