@@ -16,7 +16,7 @@ UIStyleSettingsDialog::UIStyleSettingsDialog(UIStyleSettings* settings)
 
 UIStyleSettingsDialog::~UIStyleSettingsDialog() {
   image_.Destroy();
-  preview_bmp_.Destroy();
+  preview_bmp_.DeleteObject();
 }
 
 HWND UIStyleSettingsDialog::CreateEmbedded(HWND host) {
@@ -249,7 +249,7 @@ void UIStyleSettingsDialog::Preview(int index) {
       settings_->GetColorSchemePreview(preset_[index].color_scheme_id));
   if (file_path.empty())
     return;
-  preview_bmp_.Destroy();
+  preview_bmp_.DeleteObject();
   image_.Destroy();
   HBITMAP hbmp = LoadPreviewBitmap(acptow(file_path).c_str());
   if (hbmp) {
