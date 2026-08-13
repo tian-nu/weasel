@@ -27,31 +27,55 @@ struct FuzzyFlags {
   bool lr = false;     // l/r
 };
 
-// read the derive rules currently patched into luna_pinyin.custom.yaml
+// base speller rules shared by the luna_pinyin family (from librime's
+// pinyin.yaml: abbreviation + spelling_correction + key_correction). A
+// full-list override is required because librime's __append does not work
+// for speller/algebra (see rime-ice#163, oh-my-rime fuzzy guide).
+std::vector<std::wstring> BaseAlgebraRules() {
+  return {
+      L"abbrev/^([a-z]).+$/$1/",
+      L"abbrev/^([zcs]h).+$/$1/",
+      L"derive/^([nl])ve$/$1ue/correction",
+      L"derive/^([jqxy])u/$1v/correction",
+      L"derive/un$/uen/correction",
+      L"derive/ui$/uei/correction",
+      L"derive/iu$/iou/correction",
+      L"derive/([aeiou])ng$/$1gn/correction",
+      L"derive/([dtngkhrzcs])o(u|ng)$/$1o/correction",
+      L"derive/ong$/on/correction",
+      L"derive/ao$/oa/correction",
+      L"derive/([iu])a(o|ng?)$/a$1$2/correction",
+  };
+}
+
+// read the derive rules currently patched into the custom yamls
 FuzzyFlags ReadFuzzy() {
   FuzzyFlags f;
-  std::wifstream in(FuzzyFilePath().c_str());
-  if (!in)
-    return f;
-  std::wstring line;
-  while (std::getline(in, line)) {
-    if (line.find(L"derive/^l/n/") != std::wstring::npos)
-      f.nl = true;
-    else if (line.find(L"derive/^([zcs])h/$1/") != std::wstring::npos)
-      f.flat = true;
-    else if (line.find(L"derive/([^aeiou])in$/$1ing/") != std::wstring::npos)
-      f.nasal = true;
-    else if (line.find(L"derive/^l/r/") != std::wstring::npos)
-      f.lr = true;
+  for (const auto& path :
+       {FuzzyFilePath(),
+        WeaselUserDataPath() / L"luna_pinyin_simp.custom.yaml"}) {
+    std::wifstream in(path.c_str());
+    if (!in)
+      continue;
+    std::wstring line;
+    while (std::getline(in, line)) {
+      if (line.find(L"derive/^l/n/") != std::wstring::npos)
+        f.nl = true;
+      else if (line.find(L"derive/^([zcs])h/$1/") != std::wstring::npos)
+        f.flat = true;
+      else if (line.find(L"derive/([^aeiou])in$/$1ing/") != std::wstring::npos)
+        f.nasal = true;
+      else if (line.find(L"derive/^l/r/") != std::wstring::npos)
+        f.lr = true;
+    }
   }
   return f;
 }
 
-// line-level update of the speller/algebra/__append block: existing derive
-// rules are replaced, everything else in the file (e.g. the AI page's patch)
-// is preserved.
-void WriteFuzzy(const FuzzyFlags& f) {
-  std::wstring path = FuzzyFilePath();
+// line-level update of the speller/algebra block in a custom yaml: the
+// complete rule list (base + selected fuzzy rules) replaces the existing
+// block, everything else in the file is preserved.
+void WriteFuzzyTo(const std::wstring& path, const FuzzyFlags& f) {
   std::vector<std::wstring> lines;
   {
     std::wifstream in(path.c_str());
@@ -60,7 +84,7 @@ void WriteFuzzy(const FuzzyFlags& f) {
       lines.push_back(line);
   }
 
-  std::vector<std::wstring> rules;
+  std::vector<std::wstring> rules = BaseAlgebraRules();
   if (f.nl) {
     rules.push_back(L"derive/^l/n/");
     rules.push_back(L"derive/^n/l/");
@@ -82,11 +106,11 @@ void WriteFuzzy(const FuzzyFlags& f) {
     rules.push_back(L"derive/^r/l/");
   }
 
-  // locate an existing append block: the line holding the key, plus every
-  // following line that lists a derive rule
+  // locate an existing "  speller/algebra:" block and the rule lines under it
   int start = -1;
   for (size_t i = 0; i < lines.size(); ++i) {
-    if (lines[i].find(L"speller/algebra/__append") != std::wstring::npos) {
+    if (lines[i].find(L"speller/algebra:") != std::wstring::npos &&
+        lines[i].find(L"__") == std::wstring::npos) {
       start = (int)i;
       break;
     }
@@ -95,17 +119,14 @@ void WriteFuzzy(const FuzzyFlags& f) {
   if (start >= 0) {
     end = start + 1;
     while ((size_t)end < lines.size() &&
-           lines[end].find(L"- derive/") != std::wstring::npos)
+           (lines[end].find(L"    - ") != std::wstring::npos ||
+            lines[end].find(L"      ") != std::wstring::npos))
       ++end;
   }
 
   std::vector<std::wstring> out;
   if (start >= 0) {
     out.insert(out.end(), lines.begin(), lines.begin() + start);
-    out.push_back(L"  speller/algebra/__append:");
-    for (const auto& rule : rules)
-      out.push_back(L"    - " + rule);
-    out.insert(out.end(), lines.begin() + end, lines.end());
   } else {
     out = lines;
     bool has_patch = false;
@@ -114,14 +135,23 @@ void WriteFuzzy(const FuzzyFlags& f) {
         has_patch = true;
     if (!has_patch)
       out.push_back(L"patch:");
-    out.push_back(L"  speller/algebra/__append:");
-    for (const auto& rule : rules)
-      out.push_back(L"    - " + rule);
   }
+  out.push_back(L"  speller/algebra:");
+  for (const auto& rule : rules)
+    out.push_back(L"    - " + rule);
+  if (start >= 0)
+    out.insert(out.end(), lines.begin() + end, lines.end());
 
   std::wofstream out_file(path.c_str());
   for (const auto& line : out)
     out_file << line << L"\n";
+}
+
+// fuzzy rules apply to both pinyin schemas (simplified default + traditional)
+void WriteFuzzy(const FuzzyFlags& f) {
+  WriteFuzzyTo(FuzzyFilePath(), f);
+  std::wstring simp = WeaselUserDataPath() / L"luna_pinyin_simp.custom.yaml";
+  WriteFuzzyTo(simp, f);
 }
 
 }  // namespace
