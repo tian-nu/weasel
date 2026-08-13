@@ -46,5 +46,6 @@ class UIStyleSettingsDialog : public CDialogImpl<UIStyleSettingsDialog> {
   CListBox color_schemes_;
   CStatic preview_;
   CImage image_;
+  CBitmap preview_bmp_;  // WIC-decoded preview bitmap (GDI+ avoided)
   CButton select_font_;
 };

@@ -4,7 +4,9 @@
 #include "Configurator.h"
 #include <WeaselUtility.h>
 #include <commdlg.h>
+#include <wincodec.h>
 #pragma comment(lib, "comdlg32.lib")
+#pragma comment(lib, "windowscodecs.lib")
 
 UIStyleSettingsDialog::UIStyleSettingsDialog()
     : settings_(nullptr), loaded_(false), embedded_(false), modified_(false) {}
@@ -14,6 +16,7 @@ UIStyleSettingsDialog::UIStyleSettingsDialog(UIStyleSettings* settings)
 
 UIStyleSettingsDialog::~UIStyleSettingsDialog() {
   image_.Destroy();
+  preview_bmp_.Destroy();
 }
 
 HWND UIStyleSettingsDialog::CreateEmbedded(HWND host) {
@@ -176,6 +179,59 @@ LRESULT UIStyleSettingsDialog::OnFontPointChanged(WORD, WORD, HWND, BOOL&) {
   return 0;
 }
 
+namespace {
+
+// Decode a PNG via WIC into a top-down 32bpp DIB section. Avoids GDI+
+// (CImage::Load), which can hang the UI thread on some systems.
+HBITMAP LoadPreviewBitmap(const wchar_t* path) {
+  CComPtr<IWICImagingFactory> factory;
+  if (FAILED(::CoCreateInstance(CLSID_WICImagingFactory, NULL,
+                                CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&factory))))
+    return NULL;
+  CComPtr<IWICBitmapDecoder> decoder;
+  if (FAILED(factory->CreateDecoderFromFilename(
+          path, NULL, GENERIC_READ, WICDecodeMetadataCacheOnDemand, &decoder)))
+    return NULL;
+  CComPtr<IWICBitmapFrameDecode> frame;
+  if (FAILED(decoder->GetFrame(0, &frame)))
+    return NULL;
+  CComPtr<IWICFormatConverter> converter;
+  if (FAILED(factory->CreateFormatConverter(&converter)))
+    return NULL;
+  if (FAILED(converter->Initialize(frame, GUID_WICPixelFormat32bppBGRA,
+                                   WICBitmapDitherTypeNone, NULL, 0.0,
+                                   WICBitmapPaletteTypeCustom)))
+    return NULL;
+  UINT width = 0, height = 0;
+  converter->GetSize(&width, &height);
+  if (!width || !height || width > 4096 || height > 4096)
+    return NULL;
+  BITMAPINFO bmi = {0};
+  bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+  bmi.bmiHeader.biWidth = (LONG)width;
+  bmi.bmiHeader.biHeight = -(LONG)height;  // top-down
+  bmi.bmiHeader.biPlanes = 1;
+  bmi.bmiHeader.biBitCount = 32;
+  bmi.bmiHeader.biCompression = BI_RGB;
+  void* bits = NULL;
+  HDC dc = ::GetDC(NULL);
+  HBITMAP hbmp = ::CreateDIBSection(dc, &bmi, DIB_RGB_COLORS, &bits, NULL, 0);
+  ::ReleaseDC(NULL, dc);
+  if (!hbmp || !bits) {
+    if (hbmp)
+      ::DeleteObject(hbmp);
+    return NULL;
+  }
+  if (FAILED(converter->CopyPixels(NULL, width * 4, width * height * 4,
+                                   (BYTE*)bits))) {
+    ::DeleteObject(hbmp);
+    return NULL;
+  }
+  return hbmp;
+}
+
+}  // namespace
+
 LRESULT UIStyleSettingsDialog::OnColorSchemeSelChange(WORD, WORD, HWND, BOOL&) {
   int index = color_schemes_.GetCurSel();
   if (index >= 0 && index < (int)preset_.size()) {
@@ -193,10 +249,17 @@ void UIStyleSettingsDialog::Preview(int index) {
       settings_->GetColorSchemePreview(preset_[index].color_scheme_id));
   if (file_path.empty())
     return;
+  preview_bmp_.Destroy();
   image_.Destroy();
-  // it is from ansi coding, not utf8
-  image_.Load(acptow(file_path).c_str());
-  if (!image_.IsNull()) {
-    preview_.SetBitmap(image_);
+  HBITMAP hbmp = LoadPreviewBitmap(acptow(file_path).c_str());
+  if (hbmp) {
+    preview_bmp_.Attach(hbmp);
+    preview_.SetBitmap(hbmp);
+  } else {
+    // last-resort fallback; GDI+ is normally avoided
+    image_.Load(acptow(file_path).c_str());
+    if (!image_.IsNull()) {
+      preview_.SetBitmap(image_);
+    }
   }
 }
