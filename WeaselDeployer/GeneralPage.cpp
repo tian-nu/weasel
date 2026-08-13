@@ -51,9 +51,9 @@ std::vector<std::wstring> BaseAlgebraRules() {
 // read the derive rules currently patched into the custom yamls
 FuzzyFlags ReadFuzzy() {
   FuzzyFlags f;
-  for (const auto& path :
-       {FuzzyFilePath(),
-        WeaselUserDataPath() / L"luna_pinyin_simp.custom.yaml"}) {
+  std::wstring simp_path =
+      (WeaselUserDataPath() / L"luna_pinyin_simp.custom.yaml").wstring();
+  for (const auto& path : {FuzzyFilePath(), simp_path}) {
     std::wifstream in(path.c_str());
     if (!in)
       continue;
