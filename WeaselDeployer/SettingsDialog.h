@@ -9,6 +9,10 @@
 #include "UIStyleSettings.h"
 #include <rime_levers_api.h>
 
+// cross-instance handoff: a second WeaselDeployer process sends this to the
+// running settings window to activate it and jump to a page (wParam = index).
+static const UINT kWM_ShowPage = WM_APP + 101;
+
 // The single settings window: left navigation list + stacked pages
 // (General / UI style / Schemes / Dictionary / AI).
 class SettingsDialog : public CDialogImpl<SettingsDialog> {
@@ -26,6 +30,7 @@ class SettingsDialog : public CDialogImpl<SettingsDialog> {
   MESSAGE_HANDLER(WM_INITDIALOG, OnInitDialog)
   MESSAGE_HANDLER(WM_CLOSE, OnClose)
   MESSAGE_HANDLER(WM_DRAWITEM, OnDrawItem)
+  MESSAGE_HANDLER(kWM_ShowPage, OnShowPage)
   COMMAND_ID_HANDLER(IDOK, OnOK)
   COMMAND_ID_HANDLER(IDCANCEL, OnCancel)
   COMMAND_HANDLER(IDC_NAV_LIST, LBN_SELCHANGE, OnNavSelChange)
@@ -34,6 +39,7 @@ class SettingsDialog : public CDialogImpl<SettingsDialog> {
   LRESULT OnInitDialog(UINT, WPARAM, LPARAM, BOOL&);
   LRESULT OnClose(UINT, WPARAM, LPARAM, BOOL&);
   LRESULT OnDrawItem(UINT, WPARAM, LPARAM, BOOL&);
+  LRESULT OnShowPage(UINT, WPARAM, LPARAM, BOOL&);
   LRESULT OnOK(WORD, WORD, HWND, BOOL&);
   LRESULT OnCancel(WORD, WORD, HWND, BOOL&);
   LRESULT OnNavSelChange(WORD, WORD, HWND, BOOL&);

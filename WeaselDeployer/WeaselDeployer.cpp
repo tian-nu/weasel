@@ -5,10 +5,38 @@
 #include <fstream>
 #include "WeaselDeployer.h"
 #include "Configurator.h"
+#include "SettingsDialog.h"
 
 CAppModule _Module;
 
 static int Run(LPTSTR lpCmdLine);
+
+namespace {
+
+// commands that open the settings window (as opposed to one-shot jobs like
+// /deploy or /sync that must run even while the settings window is open)
+bool OpensSettingsWindow(LPTSTR cmd) {
+  return cmd[0] == 0 || !wcscmp(L"/dict", cmd) || !wcscmp(L"/install", cmd);
+}
+
+// a second instance was launched while the settings window is already open:
+// instead of silently exiting, activate the running window and hand off the
+// requested page (tray menu: 输入法设定 -> general, 用户词典管理 -> dict)
+int ActivateExistingWindow(LPTSTR lpCmdLine) {
+  HWND hwnd = ::FindWindowW(NULL, L"【小狼毫】设置");
+  if (!hwnd)
+    return 0;  // no visible settings window to hand off to
+  if (::IsIconic(hwnd))
+    ::ShowWindow(hwnd, SW_RESTORE);
+  ::SetForegroundWindow(hwnd);
+  int page = 0;
+  if (!wcscmp(L"/dict", lpCmdLine))
+    page = 3;
+  ::SendMessage(hwnd, kWM_ShowPage, page, 0);
+  return 0;
+}
+
+}  // namespace
 
 int APIENTRY _tWinMain(HINSTANCE hInstance,
                        HINSTANCE hPrevInstance,
@@ -40,17 +68,22 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
   CreateDirectory(WeaselUserDataPath().c_str(), NULL);
 
   int ret = 0;
-  HANDLE hMutex = CreateMutex(NULL, TRUE, L"WeaselDeployerExclusiveMutex");
-  if (!hMutex) {
-    ret = 1;
-  } else if (GetLastError() == ERROR_ALREADY_EXISTS) {
-    ret = 1;
-  } else {
+  if (!OpensSettingsWindow(lpCmdLine)) {
+    // one-shot jobs (/deploy /sync /?): run regardless of whether the
+    // settings window is already open
     ret = Run(lpCmdLine);
-  }
-
-  if (hMutex) {
-    CloseHandle(hMutex);
+  } else {
+    HANDLE hMutex = CreateMutex(NULL, TRUE, L"WeaselDeployerExclusiveMutex");
+    if (!hMutex) {
+      ret = 1;
+    } else if (GetLastError() == ERROR_ALREADY_EXISTS) {
+      ret = ActivateExistingWindow(lpCmdLine);
+    } else {
+      ret = Run(lpCmdLine);
+    }
+    if (hMutex) {
+      CloseHandle(hMutex);
+    }
   }
   _Module.Term();
   ::CoUninitialize();

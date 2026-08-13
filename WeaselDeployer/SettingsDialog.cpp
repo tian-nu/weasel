@@ -147,6 +147,16 @@ LRESULT SettingsDialog::OnDrawItem(UINT, WPARAM, LPARAM lParam, BOOL&) {
   return TRUE;
 }
 
+LRESULT SettingsDialog::OnShowPage(UINT, WPARAM wParam, LPARAM, BOOL&) {
+  // handoff from a second WeaselDeployer instance (tray menu): jump to the
+  // requested page; the sending process already brought us to the foreground.
+  int page = (int)wParam;
+  if (page < 0 || page >= 5)
+    page = 0;
+  ShowPage(page);
+  return 0;
+}
+
 LRESULT SettingsDialog::OnNavSelChange(WORD, WORD, HWND, BOOL&) {
   HWND nav = GetDlgItem(IDC_NAV_LIST);
   int sel = (int)SendMessage(nav, LB_GETCURSEL, 0, 0);
@@ -158,6 +168,10 @@ LRESULT SettingsDialog::OnNavSelChange(WORD, WORD, HWND, BOOL&) {
 void SettingsDialog::ShowPage(int index) {
   if (index < 0 || index >= 5)
     return;
+  // keep the navigation highlight in sync when the page is switched from
+  // outside (e.g. the /dict handoff message)
+  HWND nav = GetDlgItem(IDC_NAV_LIST);
+  ::SendMessage(nav, LB_SETCURSEL, index, 0);
   for (int i = 0; i < 5; ++i) {
     if (page_windows_[i]) {
       ::ShowWindow(page_windows_[i], i == index ? SW_SHOW : SW_HIDE);
