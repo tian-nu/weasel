@@ -1,4 +1,4 @@
-﻿﻿; weasel installation script
+﻿; weasel installation script
 !include FileFunc.nsh
 !include LogicLib.nsh
 !include MUI2.nsh
