@@ -1,4 +1,4 @@
-﻿; weasel installation script
+﻿﻿; weasel installation script
 !include FileFunc.nsh
 !include LogicLib.nsh
 !include MUI2.nsh
@@ -322,14 +322,9 @@ program_files:
   WriteRegDWORD HKLM "${REG_UNINST_KEY}" "NoRepair" 1
   WriteUninstaller "$INSTDIR\uninstall.exe"
 
-  ; run as user...
-  IfSilent deploy_silently
-  ExecWait "$INSTDIR\WeaselDeployer.exe /install"
-  GoTo deploy_done
-
-  deploy_silently:
+  ; deploy directly; the settings window is not opened during install
+  ; (the user can open it later from the tray)
   ExecWait "$INSTDIR\WeaselDeployer.exe /deploy"
-  deploy_done:
 
   ; don't redirect on 64 bit system for auto run setting
   ${If} ${IsNativeARM64}
@@ -352,9 +347,8 @@ program_files:
   WriteRegStr HKCU "Software\Rime\Weasel\Updates" "CheckForUpdates" "1"
   end:
 
-  ; Prompt reboot
-  StrCmp $0 "Upgrade" 0 +2
-  SetRebootFlag true
+  ; no reboot prompt: the input method works without a restart
+  ; ($0 "Upgrade" previously forced SetRebootFlag true here)
 
 SectionEnd
 

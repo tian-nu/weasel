@@ -56,6 +56,10 @@ bool UIStyleSettingsDialog::Apply() {
   if (point > 40)
     point = 40;
   api->customize_int(settings_->settings(), "style/font_point", point);
+  // inline preedit: show pinyin at the caret, candidates in the popup only
+  bool inline_preedit = IsDlgButtonChecked(IDC_CHECK_INLINE) == BST_CHECKED;
+  api->customize_bool(settings_->settings(), "style/inline_preedit",
+                      inline_preedit);
   bool saved = api->save_settings(settings_->settings());
   modified_ = false;
   return saved;
@@ -95,6 +99,12 @@ LRESULT UIStyleSettingsDialog::OnInitDialog(UINT, WPARAM, LPARAM, BOOL&) {
       WCHAR buf[16] = {0};
       _itow_s(point, buf, 10);
       SetDlgItemTextW(IDC_FONT_POINT, buf);
+      Bool inline_preedit = 0;
+      if (rime_get_api()->config_get_bool(&config, "style/inline_preedit",
+                                          &inline_preedit)) {
+        CheckDlgButton(IDC_CHECK_INLINE,
+                       inline_preedit ? BST_CHECKED : BST_UNCHECKED);
+      }
     }
   }
 
@@ -175,6 +185,11 @@ LRESULT UIStyleSettingsDialog::OnSelectFont(WORD, WORD, HWND, BOOL&) {
 }
 
 LRESULT UIStyleSettingsDialog::OnFontPointChanged(WORD, WORD, HWND, BOOL&) {
+  modified_ = true;
+  return 0;
+}
+
+LRESULT UIStyleSettingsDialog::OnInlineChanged(WORD, WORD, HWND, BOOL&) {
   modified_ = true;
   return 0;
 }
