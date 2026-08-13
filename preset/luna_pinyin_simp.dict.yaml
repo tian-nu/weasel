@@ -1,0 +1,13 @@
+# Rime dictionary
+# encoding: utf-8
+# 简体词库（整合雾凇拼音词库，GPL-3.0，https://github.com/iDvel/rime-ice）
+---
+name: luna_pinyin_simp
+version: "2026-08-13"
+import_tables:
+  - cn_dicts/8105     # 通用规范汉字表（简体单字）
+  - cn_dicts/base     # 基础词库（两字词+调频）
+  - cn_dicts/ext      # 扩展词库（多音字注音）
+  - cn_dicts/tencent  # 腾讯词向量（大词库）
+  - cn_dicts/others   # 杂项
+...

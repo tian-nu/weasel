@@ -137,6 +137,19 @@ jobs:
             Copy-Item 'preset\luna_pinyin.schema.yaml' 'output\data\luna_pinyin.schema.yaml' -Force
             Write-Host 'using bundled luna_pinyin.schema.yaml (default zh_hans)'
           }
+          # Simplified-Chinese dictionary: bundle the fog (rime-ice) word lists
+          # so the default luna_pinyin_simp scheme outputs clean simplified
+          # Chinese without relying on opencc conversion (see preset/cn_dicts).
+          if (Test-Path 'preset\luna_pinyin_simp.schema.yaml') {
+            Copy-Item 'preset\luna_pinyin_simp.schema.yaml' 'output\data\luna_pinyin_simp.schema.yaml' -Force
+            Write-Host 'using bundled luna_pinyin_simp.schema.yaml (fog dict)'
+          }
+          if (Test-Path 'preset\luna_pinyin_simp.dict.yaml') {
+            Copy-Item 'preset\luna_pinyin_simp.dict.yaml' 'output\data\luna_pinyin_simp.dict.yaml' -Force
+            New-Item -ItemType Directory -Force -Path 'output\data\cn_dicts' | Out-Null
+            Copy-Item 'preset\cn_dicts\*' 'output\data\cn_dicts\' -Force
+            Write-Host 'using bundled luna_pinyin_simp dict (fog cn_dicts)'
+          }
           # opencc data for the simplifier: get-rime already unpacks it into
           # output\data\opencc; only copy if missing.
           $have = Get-ChildItem -Path 'output\data\opencc' -Filter '*.ocd2' -ErrorAction SilentlyContinue | Select-Object -First 1
