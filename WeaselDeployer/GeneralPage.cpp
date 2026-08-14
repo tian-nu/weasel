@@ -5,7 +5,6 @@
 #include <rime_levers_api.h>
 #include <fstream>
 #include <vector>
-#include "TooltipHelper.h"
 #pragma warning(disable : 4005)
 #include "WeaselDeployer.h"
 
