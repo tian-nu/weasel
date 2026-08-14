@@ -39,6 +39,7 @@ class SettingsDialog : public CDialogImpl<SettingsDialog> {
   MESSAGE_HANDLER(kWM_ShowPage, OnShowPage)
   COMMAND_ID_HANDLER(IDOK, OnOK)
   COMMAND_ID_HANDLER(IDCANCEL, OnCancel)
+  COMMAND_ID_HANDLER(IDC_APPLY, OnApply)
   COMMAND_HANDLER(IDC_NAV_LIST, LBN_SELCHANGE, OnNavSelChange)
   END_MSG_MAP()
 
@@ -48,6 +49,7 @@ class SettingsDialog : public CDialogImpl<SettingsDialog> {
   LRESULT OnShowPage(UINT, WPARAM, LPARAM, BOOL&);
   LRESULT OnOK(WORD, WORD, HWND, BOOL&);
   LRESULT OnCancel(WORD, WORD, HWND, BOOL&);
+  LRESULT OnApply(WORD, WORD, HWND, BOOL&);
   LRESULT OnNavSelChange(WORD, WORD, HWND, BOOL&);
 
   void ShowPage(int index);

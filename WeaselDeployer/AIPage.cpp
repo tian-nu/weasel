@@ -3,6 +3,7 @@
 #include <WeaselUtility.h>
 #include <fstream>
 #include <string>
+#include <filesystem>
 #pragma warning(disable : 4005)
 #include "WeaselDeployer.h"
 
@@ -102,8 +103,13 @@ void AIPage::Load() {
   WCHAR buf[16] = {0};
   _itow_s(head, buf, 10);
   SetDlgItemTextW(IDC_AI_HEAD, buf);
+
   std::wstring model_path = WeaselUserDataPath() / L"ai" / L"model.lmbin";
-  SetDlgItemTextW(IDC_AI_MODEL_PATH, model_path.c_str());
+  std::error_code ec;
+  bool has_model = std::filesystem::exists(model_path, ec);
+  std::wstring status =
+      has_model ? L"模型文件：已就绪\n" : L"模型文件：尚未安装\n";
+  SetDlgItemTextW(IDC_AI_MODEL_PATH, (status + model_path).c_str());
   modified_ = false;
 }
 

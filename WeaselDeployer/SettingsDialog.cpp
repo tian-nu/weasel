@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "SettingsDialog.h"
+#include "Configurator.h"
 #include <WeaselUtility.h>
 #pragma warning(disable : 4005)
 #include "WeaselDeployer.h"
@@ -210,6 +211,18 @@ LRESULT SettingsDialog::OnOK(WORD, WORD, HWND, BOOL&) {
     modified_ = true;
   }
   EndDialog(IDOK);
+  return 0;
+}
+
+LRESULT SettingsDialog::OnApply(WORD, WORD, HWND, BOOL&) {
+  if (ApplyAll()) {
+    bool ok = configurator_ && configurator_->UpdateWorkspace(false) == 0;
+    // deploy can momentarily pause the IME; let the user know when it's done
+    // so the button is not mistaken for a no-op.
+    ::MessageBox(m_hWnd, ok ? L"已应用并重新部署。" : L"应用失败，请查看日志。",
+                 L"【小狼毫】",
+                 MB_OK | (ok ? MB_ICONINFORMATION : MB_ICONERROR));
+  }
   return 0;
 }
 

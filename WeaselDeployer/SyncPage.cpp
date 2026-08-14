@@ -3,6 +3,7 @@
 #include "Configurator.h"
 #include <WeaselUtility.h>
 #include <fstream>
+#include <shlobj.h>
 #pragma warning(disable : 4005)
 #include "WeaselDeployer.h"
 
@@ -82,6 +83,29 @@ LRESULT SyncPage::OnSyncNow(WORD, WORD, HWND, BOOL&) {
   ::MessageBox(m_hWnd, rc == 0 ? L"同步完成。" : L"同步失败，请检查同步目录。",
                L"【小狼毫】",
                MB_OK | (rc == 0 ? MB_ICONINFORMATION : MB_ICONERROR));
+  return 0;
+}
+
+LRESULT SyncPage::OnBrowse(WORD, WORD, HWND, BOOL&) {
+  // SHBrowseForFolder: pick a sync directory and drop it in the edit box.
+  BROWSEINFOW bi = {0};
+  bi.hwndOwner = m_hWnd;
+  bi.ulFlags = BIF_RETURNONLYFSDIRS | BIF_USENEWUI | BIF_NEWDIALOGSTYLE;
+  bi.lpszTitle = L"选择同步目录";
+  LPITEMIDLIST pidl = ::SHBrowseForFolderW(&bi);
+  if (!pidl)
+    return 0;
+  WCHAR path[MAX_PATH] = {0};
+  bool ok = ::SHGetPathFromIDListW(pidl, path) != 0;
+  LPMALLOC shellMalloc = NULL;
+  if (SUCCEEDED(::SHGetMalloc(&shellMalloc))) {
+    shellMalloc->Free(pidl);
+    shellMalloc->Release();
+  }
+  if (ok && path[0]) {
+    SetDlgItemTextW(IDC_SYNC_DIR, path);
+    modified_ = true;
+  }
   return 0;
 }
 
