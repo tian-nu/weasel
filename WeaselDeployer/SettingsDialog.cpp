@@ -115,9 +115,8 @@ LRESULT SettingsDialog::OnClose(UINT, WPARAM, LPARAM, BOOL&) {
   return 0;
 }
 
-// owner-draw painting for the navigation list: full-row selection highlight,
-// vertically centered text, inactive-selection treated like a classic
-// unfocused listbox.
+// owner-draw painting for the navigation list: soft warm selection with a
+// left accent bar, vertically centered text.
 LRESULT SettingsDialog::OnDrawItem(UINT, WPARAM, LPARAM lParam, BOOL&) {
   LPDRAWITEMSTRUCT dis = reinterpret_cast<LPDRAWITEMSTRUCT>(lParam);
   if (!dis || dis->CtlID != IDC_NAV_LIST || dis->itemID == (UINT)-1)
@@ -125,20 +124,23 @@ LRESULT SettingsDialog::OnDrawItem(UINT, WPARAM, LPARAM lParam, BOOL&) {
   HDC dc = dis->hDC;
   RECT rc = dis->rcItem;
   bool selected = (dis->itemState & ODS_SELECTED) != 0;
-  bool focused = ::GetFocus() == dis->hwndItem;
-  COLORREF bg = selected ? GetSysColor(focused ? COLOR_HIGHLIGHT : COLOR_3DFACE)
-                         : GetSysColor(COLOR_WINDOW);
-  COLORREF fg = selected
-                    ? GetSysColor(focused ? COLOR_HIGHLIGHTTEXT : COLOR_BTNTEXT)
-                    : GetSysColor(COLOR_WINDOWTEXT);
+  // modern selection: warm tinted background + orange accent bar on the left
+  COLORREF bg = selected ? RGB(247, 234, 226) : GetSysColor(COLOR_WINDOW);
+  COLORREF fg = selected ? RGB(70, 56, 48) : GetSysColor(COLOR_WINDOWTEXT);
   HBRUSH brush = ::CreateSolidBrush(bg);
   ::FillRect(dc, &rc, brush);
   ::DeleteObject(brush);
+  if (selected) {
+    HBRUSH accent = ::CreateSolidBrush(RGB(217, 119, 87));
+    RECT bar = {rc.left, rc.top, rc.left + 4, rc.bottom};
+    ::FillRect(dc, &bar, accent);
+    ::DeleteObject(accent);
+  }
 
   wchar_t text[128] = {0};
   ::SendMessage(dis->hwndItem, LB_GETTEXT, dis->itemID, (LPARAM)text);
   RECT rcText = rc;
-  rcText.left += 12;
+  rcText.left += 16;
   rcText.right -= 8;
   HFONT old = (HFONT)::SelectObject(
       dc, nav_font_ ? nav_font_ : (HFONT)::GetStockObject(DEFAULT_GUI_FONT));
@@ -147,7 +149,7 @@ LRESULT SettingsDialog::OnDrawItem(UINT, WPARAM, LPARAM lParam, BOOL&) {
   ::DrawText(dc, text, -1, &rcText,
              DT_LEFT | DT_VCENTER | DT_SINGLELINE | DT_END_ELLIPSIS);
   ::SelectObject(dc, old);
-  if (selected && focused)
+  if (selected && ::GetFocus() == dis->hwndItem)
     ::DrawFocusRect(dc, &dis->rcItem);
   return TRUE;
 }
