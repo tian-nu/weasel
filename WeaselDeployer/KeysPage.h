@@ -29,6 +29,7 @@ class KeysPage : public CDialogImpl<KeysPage> {
   COMMAND_ID_HANDLER(IDC_PAGE_BRACKET, OnChanged)
   COMMAND_ID_HANDLER(IDC_DEL_CTRL, OnChanged)
   COMMAND_ID_HANDLER(IDC_DEL_NONE, OnChanged)
+  COMMAND_RANGE_HANDLER(IDC_HELP_SWITCH, IDC_HELP_DEL, OnHelp)
   END_MSG_MAP()
 
   void Load();
@@ -38,6 +39,7 @@ class KeysPage : public CDialogImpl<KeysPage> {
   LRESULT OnInitDialog(UINT, WPARAM, LPARAM, BOOL&);
   LRESULT OnClose(UINT, WPARAM, LPARAM, BOOL&);
   LRESULT OnChanged(WORD, WORD, HWND, BOOL&);
+  LRESULT OnHelp(WORD, WORD wID, HWND, BOOL&);
 
   bool modified_;
 };

@@ -3,7 +3,6 @@
 #include <WeaselUtility.h>
 #include <fstream>
 #include <vector>
-#include "TooltipHelper.h"
 #pragma warning(disable : 4005)
 #include "WeaselDeployer.h"
 
@@ -93,16 +92,31 @@ KeysPage::~KeysPage() {}
 
 LRESULT KeysPage::OnInitDialog(UINT, WPARAM, LPARAM, BOOL&) {
   Load();
-  AttachTooltip(m_hWnd, IDC_HELP_SWITCH,
-                L"切换中英文输入状态的快捷键。\n按 Shift "
-                L"切换（多数输入法的习惯），或按 Ctrl 切换。");
-  AttachTooltip(m_hWnd, IDC_HELP_PAGEKEYS,
-                L"在候选词之间翻页的快捷键。\n数字键 1-9 直接选择候选，Tab "
-                L"选择下一候选。");
-  AttachTooltip(m_hWnd, IDC_HELP_DEL,
-                L"删除当前候选。\n被删除的词会从用户词库移除（词典词条不受影响"
-                L"），之后不再优先出现。");
   return TRUE;
+}
+
+LRESULT KeysPage::OnHelp(WORD, WORD wID, HWND, BOOL&) {
+  const wchar_t* text = nullptr;
+  switch (wID) {
+    case IDC_HELP_SWITCH:
+      text =
+          L"切换中英文输入状态的快捷键。\n按 Shift "
+          L"切换（多数输入法的习惯），或按 Ctrl 切换。";
+      break;
+    case IDC_HELP_PAGEKEYS:
+      text =
+          L"在候选词之间翻页的快捷键。\n数字键 1-9 直接选择候选，Tab "
+          L"选择下一候选。";
+      break;
+    case IDC_HELP_DEL:
+      text =
+          L"删除当前候选。\n被删除的词会从用户词库移除（词典词条不受影响），之"
+          L"后不再优先出现。";
+      break;
+  }
+  if (text)
+    ::MessageBox(m_hWnd, text, L"说明", MB_OK | MB_ICONINFORMATION);
+  return 0;
 }
 
 LRESULT KeysPage::OnClose(UINT, WPARAM, LPARAM, BOOL&) {

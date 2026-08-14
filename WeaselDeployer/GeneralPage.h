@@ -24,6 +24,7 @@ class GeneralPage : public CDialogImpl<GeneralPage> {
   COMMAND_ID_HANDLER(IDC_CHECK_LR, OnFuzzyChanged)
   COMMAND_ID_HANDLER(IDC_REDEPLOY, OnRedeploy)
   COMMAND_ID_HANDLER(IDC_OPEN_DATA_DIR, OnOpenDataDir)
+  COMMAND_RANGE_HANDLER(IDC_HELP_PAGESIZE, IDC_HELP_FUZZY, OnHelp)
   END_MSG_MAP()
 
   // loads current values; call once after creation
@@ -40,6 +41,7 @@ class GeneralPage : public CDialogImpl<GeneralPage> {
   LRESULT OnFuzzyChanged(WORD, WORD, HWND, BOOL&);
   LRESULT OnRedeploy(WORD, WORD, HWND, BOOL&);
   LRESULT OnOpenDataDir(WORD, WORD, HWND, BOOL&);
+  LRESULT OnHelp(WORD, WORD wID, HWND, BOOL&);
 
   RimeLeversApi* api_;
   RimeCustomSettings* settings_;

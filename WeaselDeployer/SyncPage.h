@@ -20,6 +20,7 @@ class SyncPage : public CDialogImpl<SyncPage> {
   MESSAGE_HANDLER(WM_CLOSE, OnClose)
   COMMAND_ID_HANDLER(IDC_SYNC_NOW, OnSyncNow)
   COMMAND_ID_HANDLER(IDC_SYNC_BROWSE, OnBrowse)
+  COMMAND_ID_HANDLER(IDC_HELP_SYNC, OnHelp)
   END_MSG_MAP()
 
   void Load();
@@ -30,6 +31,7 @@ class SyncPage : public CDialogImpl<SyncPage> {
   LRESULT OnClose(UINT, WPARAM, LPARAM, BOOL&);
   LRESULT OnSyncNow(WORD, WORD, HWND, BOOL&);
   LRESULT OnBrowse(WORD, WORD, HWND, BOOL&);
+  LRESULT OnHelp(WORD, WORD wID, HWND, BOOL&);
 
   class Configurator* configurator_;
   bool modified_;

@@ -20,6 +20,7 @@
 #include <wtl/atlctrls.h>
 #include <wtl/atlctrlx.h>
 #include <wtl/atlmisc.h>
+#include <wtl/atluser.h>
 #include <wtl/atldlgs.h>
 
 #include <logging.h>

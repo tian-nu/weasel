@@ -186,17 +186,31 @@ GeneralPage::~GeneralPage() {
 
 LRESULT GeneralPage::OnInitDialog(UINT, WPARAM, LPARAM, BOOL&) {
   Load();
-  AttachTooltip(m_hWnd, IDC_HELP_PAGESIZE,
-                L"每页显示的候选词数量（1-20）。\nAI 混合模式下，AI "
-                L"候选数量不应超过此值，否则多余的 AI 候选不会显示。");
-  AttachTooltip(
-      m_hWnd, IDC_HELP_TRAY,
-      L"在系统托盘显示小狼毫图标。\n关闭后，可改用任务栏语言栏切换输入法。");
-  AttachTooltip(m_hWnd, IDC_HELP_FUZZY,
-                L"开启后输入拼音时对指定声母/韵母不做区分。\n例如「n/l "
-                L"不分」时，输入 nian 也能打出「连、联」。\n仅作用于 "
-                L"luna_pinyin 与 luna_pinyin_simp 方案。");
   return TRUE;
+}
+
+LRESULT GeneralPage::OnHelp(WORD, WORD wID, HWND, BOOL&) {
+  const wchar_t* text = nullptr;
+  switch (wID) {
+    case IDC_HELP_PAGESIZE:
+      text =
+          L"每页显示的候选词数量（1-20）。\nAI 混合模式下，AI "
+          L"候选数量不应超过此值，否则多余的 AI 候选不会显示。";
+      break;
+    case IDC_HELP_TRAY:
+      text =
+          L"在系统托盘显示小狼毫图标。\n关闭后，可改用任务栏语言栏切换输入法。";
+      break;
+    case IDC_HELP_FUZZY:
+      text =
+          L"开启后输入拼音时对指定声母/韵母不做区分。\n例如「n/l "
+          L"不分」时，输入 nian 也能打出「连、联」。\n仅作用于 "
+          L"luna_pinyin 与 luna_pinyin_simp 方案。";
+      break;
+  }
+  if (text)
+    ::MessageBox(m_hWnd, text, L"说明", MB_OK | MB_ICONINFORMATION);
+  return 0;
 }
 
 LRESULT GeneralPage::OnClose(UINT, WPARAM, LPARAM, BOOL&) {

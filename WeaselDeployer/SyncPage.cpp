@@ -3,7 +3,6 @@
 #include "Configurator.h"
 #include <WeaselUtility.h>
 #include <fstream>
-#include "TooltipHelper.h"
 #include <shlobj.h>
 #pragma warning(disable : 4005)
 #include "WeaselDeployer.h"
@@ -71,10 +70,15 @@ SyncPage::~SyncPage() {}
 
 LRESULT SyncPage::OnInitDialog(UINT, WPARAM, LPARAM, BOOL&) {
   Load();
-  AttachTooltip(m_hWnd, IDC_HELP_SYNC,
-                L"词库与配置将同步到该目录，用于多台设备间迁移。\n同步只合并、"
-                L"不删除本地内容。");
   return TRUE;
+}
+
+LRESULT SyncPage::OnHelp(WORD, WORD, HWND, BOOL&) {
+  ::MessageBox(m_hWnd,
+               L"词库与配置将同步到该目录，用于多台设备间迁移。\n同步只合并、不"
+               L"删除本地内容。",
+               L"说明", MB_OK | MB_ICONINFORMATION);
+  return 0;
 }
 
 LRESULT SyncPage::OnClose(UINT, WPARAM, LPARAM, BOOL&) {
