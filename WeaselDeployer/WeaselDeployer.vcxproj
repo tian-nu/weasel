@@ -187,6 +187,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Configurator.h" />    <ClInclude Include="AIPage.h" />
+    <ClInclude Include="KeysPage.h" />
+    <ClInclude Include="SyncPage.h" />
     <ClInclude Include="GeneralPage.h" />
     <ClInclude Include="SettingsDialog.h" />
 
@@ -202,6 +204,8 @@
   <ItemGroup>
     <ClCompile Include="..\RimeWithWeasel\WeaselUtility.cpp" />
     <ClCompile Include="Configurator.cpp" />    <ClCompile Include="AIPage.cpp" />
+    <ClCompile Include="KeysPage.cpp" />
+    <ClCompile Include="SyncPage.cpp" />
     <ClCompile Include="GeneralPage.cpp" />
     <ClCompile Include="SettingsDialog.cpp" />
 
