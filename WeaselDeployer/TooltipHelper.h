@@ -7,10 +7,9 @@
 // The tooltip window lives until the process exits; acceptable for the
 // settings dialog which owns the process lifetime.
 inline void AttachTooltip(HWND parent, UINT ctl_id, const wchar_t* text) {
-  HWND tt = ::CreateWindowExW(0, TOOLTIPS_CLASSW, nullptr,
-                              WS_POPUP | TTS_ALWAYSTIP | TTS_NOPREFIX, 0, 0,
-                              0, 0, parent, nullptr, ::GetModuleHandleW(nullptr),
-                              nullptr);
+  HWND tt = ::CreateWindowExW(
+      0, TOOLTIPS_CLASSW, nullptr, WS_POPUP | TTS_ALWAYSTIP | TTS_NOPREFIX, 0,
+      0, 0, 0, parent, nullptr, ::GetModuleHandleW(nullptr), nullptr);
   if (!tt)
     return;
   TOOLINFOW ti = {0};
