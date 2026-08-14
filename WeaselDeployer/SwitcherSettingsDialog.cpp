@@ -140,6 +140,12 @@ LRESULT SwitcherSettingsDialog::OnInitDialog(UINT, WPARAM, LPARAM, BOOL&) {
 
   Populate();
 
+  // select the first schema by default so the description pane is not empty
+  if (schema_list_.GetItemCount() > 0) {
+    schema_list_.SetItemState(0, LVIS_SELECTED, LVIS_SELECTED);
+    ShowDetails((RimeSchemaInfo*)schema_list_.GetItemData(0));
+  }
+
   CenterWindow();
   BringWindowToTop();
   return TRUE;

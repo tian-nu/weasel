@@ -254,6 +254,47 @@ HBITMAP LoadPreviewBitmap(const wchar_t* path) {
   return hbmp;
 }
 
+// Scale a bitmap to fit the target box preserving aspect ratio, centered.
+// Consumes (deletes) the input bitmap and returns the new one.
+HBITMAP ScalePreviewBitmap(HBITMAP hbmp, int target_w, int target_h) {
+  BITMAP bm;
+  if (!::GetObject(hbmp, sizeof(bm), &bm) || target_w <= 0 || target_h <= 0)
+    return hbmp;
+  if (bm.bmWidth == target_w && bm.bmHeight == target_h)
+    return hbmp;
+  double scale = min((double)target_w / bm.bmWidth,
+                     (double)target_h / bm.bmHeight);
+  int w = max(1, (int)(bm.bmWidth * scale + 0.5));
+  int h = max(1, (int)(bm.bmHeight * scale + 0.5));
+  BITMAPINFO bmi = {0};
+  bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+  bmi.bmiHeader.biWidth = w;
+  bmi.bmiHeader.biHeight = -h;  // top-down
+  bmi.bmiHeader.biPlanes = 1;
+  bmi.bmiHeader.biBitCount = 32;
+  bmi.bmiHeader.biCompression = BI_RGB;
+  void* bits = NULL;
+  HDC screen = ::GetDC(NULL);
+  HBITMAP scaled = ::CreateDIBSection(screen, &bmi, DIB_RGB_COLORS, &bits,
+                                      NULL, 0);
+  ::ReleaseDC(NULL, screen);
+  if (scaled) {
+    HDC src_dc = ::CreateCompatibleDC(NULL);
+    HDC dst_dc = ::CreateCompatibleDC(NULL);
+    HBITMAP old_src = (HBITMAP)::SelectObject(src_dc, hbmp);
+    HBITMAP old_dst = (HBITMAP)::SelectObject(dst_dc, scaled);
+    ::StretchBlt(dst_dc, (target_w - w) / 2, (target_h - h) / 2, w, h,
+                 src_dc, 0, 0, bm.bmWidth, bm.bmHeight, SRCCOPY);
+    ::SelectObject(dst_dc, old_dst);
+    ::SelectObject(src_dc, old_src);
+    ::DeleteDC(src_dc);
+    ::DeleteDC(dst_dc);
+    ::DeleteObject(hbmp);  // consumed
+    return scaled;
+  }
+  return hbmp;
+}
+
 }  // namespace
 
 LRESULT UIStyleSettingsDialog::OnColorSchemeSelChange(WORD, WORD, HWND, BOOL&) {
@@ -277,6 +318,9 @@ void UIStyleSettingsDialog::Preview(int index) {
   image_.Destroy();
   HBITMAP hbmp = LoadPreviewBitmap(acptow(file_path).c_str());
   if (hbmp) {
+    CRect rc;
+    preview_.GetClientRect(&rc);
+    hbmp = ScalePreviewBitmap(hbmp, rc.Width(), rc.Height());
     preview_bmp_.Attach(hbmp);
     preview_.SetBitmap(hbmp);
   } else {
