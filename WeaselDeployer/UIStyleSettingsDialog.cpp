@@ -262,8 +262,8 @@ HBITMAP ScalePreviewBitmap(HBITMAP hbmp, int target_w, int target_h) {
     return hbmp;
   if (bm.bmWidth == target_w && bm.bmHeight == target_h)
     return hbmp;
-  double scale = min((double)target_w / bm.bmWidth,
-                     (double)target_h / bm.bmHeight);
+  double scale =
+      min((double)target_w / bm.bmWidth, (double)target_h / bm.bmHeight);
   int w = max(1, (int)(bm.bmWidth * scale + 0.5));
   int h = max(1, (int)(bm.bmHeight * scale + 0.5));
   BITMAPINFO bmi = {0};
@@ -275,16 +275,16 @@ HBITMAP ScalePreviewBitmap(HBITMAP hbmp, int target_w, int target_h) {
   bmi.bmiHeader.biCompression = BI_RGB;
   void* bits = NULL;
   HDC screen = ::GetDC(NULL);
-  HBITMAP scaled = ::CreateDIBSection(screen, &bmi, DIB_RGB_COLORS, &bits,
-                                      NULL, 0);
+  HBITMAP scaled =
+      ::CreateDIBSection(screen, &bmi, DIB_RGB_COLORS, &bits, NULL, 0);
   ::ReleaseDC(NULL, screen);
   if (scaled) {
     HDC src_dc = ::CreateCompatibleDC(NULL);
     HDC dst_dc = ::CreateCompatibleDC(NULL);
     HBITMAP old_src = (HBITMAP)::SelectObject(src_dc, hbmp);
     HBITMAP old_dst = (HBITMAP)::SelectObject(dst_dc, scaled);
-    ::StretchBlt(dst_dc, (target_w - w) / 2, (target_h - h) / 2, w, h,
-                 src_dc, 0, 0, bm.bmWidth, bm.bmHeight, SRCCOPY);
+    ::StretchBlt(dst_dc, (target_w - w) / 2, (target_h - h) / 2, w, h, src_dc,
+                 0, 0, bm.bmWidth, bm.bmHeight, SRCCOPY);
     ::SelectObject(dst_dc, old_dst);
     ::SelectObject(src_dc, old_src);
     ::DeleteDC(src_dc);
