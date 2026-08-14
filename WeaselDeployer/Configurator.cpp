@@ -83,7 +83,8 @@ int Configurator::Run(bool installing, int initial_page) {
   RimeSwitcherSettings* switcher_settings = api->switcher_settings_init();
   UIStyleSettings ui_style_settings;
 
-  SettingsDialog dialog(switcher_settings, &ui_style_settings, initial_page);
+  SettingsDialog dialog(this, switcher_settings, &ui_style_settings,
+                        initial_page);
   if (dialog.DoModal() == IDOK) {
     reconfigured = dialog.Modified();
     if (installing || reconfigured) {

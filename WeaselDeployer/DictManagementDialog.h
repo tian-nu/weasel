@@ -24,6 +24,7 @@ class DictManagementDialog : public CDialogImpl<DictManagementDialog> {
   COMMAND_ID_HANDLER(IDC_RESTORE, OnRestore)
   COMMAND_ID_HANDLER(IDC_EXPORT, OnExport)
   COMMAND_ID_HANDLER(IDC_IMPORT, OnImport)
+  COMMAND_ID_HANDLER(IDC_CLEAR_USERDB, OnClearUserDb)
   COMMAND_HANDLER(IDC_USER_DICT_LIST, LBN_SELCHANGE, OnUserDictListSelChange)
   END_MSG_MAP()
 
@@ -33,6 +34,7 @@ class DictManagementDialog : public CDialogImpl<DictManagementDialog> {
   LRESULT OnRestore(WORD, WORD code, HWND, BOOL&);
   LRESULT OnExport(WORD, WORD code, HWND, BOOL&);
   LRESULT OnImport(WORD, WORD code, HWND, BOOL&);
+  LRESULT OnClearUserDb(WORD, WORD code, HWND, BOOL&);
   LRESULT OnUserDictListSelChange(WORD, WORD, HWND, BOOL&);
 
   void Populate();

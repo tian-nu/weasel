@@ -285,6 +285,32 @@ LRESULT DictManagementDialog::OnImport(WORD, WORD code, HWND, BOOL&) {
   return 0;
 }
 
+LRESULT DictManagementDialog::OnClearUserDb(WORD, WORD, HWND, BOOL&) {
+  if (::MessageBox(m_hWnd,
+                   L"将删除所有用户词库（自造词与选词记忆），操作不可撤销。"
+                   L"\n建议先「输出词典快照」备份。确定清空吗？",
+                   L"【小狼毫】", MB_YESNO | MB_ICONWARNING) != IDYES)
+    return 0;
+  int removed = 0;
+  std::filesystem::path user_dir = WeaselUserDataPath();
+  std::error_code ec;
+  for (const auto& entry : std::filesystem::directory_iterator(user_dir, ec)) {
+    if (ec)
+      break;
+    if (!entry.is_directory())
+      continue;
+    const std::wstring name = entry.path().filename().wstring();
+    if (name.size() >= 6 && name.compare(name.size() - 6, 6, L".userdb") == 0) {
+      std::filesystem::remove_all(entry.path(), ec);
+      ++removed;
+    }
+  }
+  ::MessageBox(m_hWnd,
+               removed > 0 ? L"已清空用户词库。" : L"没有找到用户词库。",
+               L"【小狼毫】", MB_OK | MB_ICONINFORMATION);
+  return 0;
+}
+
 LRESULT DictManagementDialog::OnUserDictListSelChange(WORD, WORD, HWND, BOOL&) {
   int index = user_dict_list_.GetCurSel();
   BOOL enabled = index < 0 ? FALSE : TRUE;

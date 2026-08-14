@@ -37,17 +37,19 @@ HFONT CreateNavFont(HWND nav) {
 
 }  // namespace
 
-SettingsDialog::SettingsDialog(RimeSwitcherSettings* switcher_settings,
+SettingsDialog::SettingsDialog(Configurator* configurator,
+                               RimeSwitcherSettings* switcher_settings,
                                UIStyleSettings* ui_style_settings,
                                int initial_page)
-    : switcher_settings_(switcher_settings),
+    : configurator_(configurator),
+      switcher_settings_(switcher_settings),
       ui_style_settings_(ui_style_settings),
       current_page_(0),
       initial_page_(initial_page),
       modified_(false),
       nav_font_(nullptr) {
-  page_windows_[0] = page_windows_[1] = page_windows_[2] = page_windows_[3] =
-      page_windows_[4] = NULL;
+  for (int i = 0; i < kPageCount; ++i)
+    page_windows_[i] = NULL;
 }
 
 SettingsDialog::~SettingsDialog() {
@@ -72,12 +74,12 @@ LRESULT SettingsDialog::OnInitDialog(UINT, WPARAM, LPARAM, BOOL&) {
     }
   }
   // page titles; order must match ShowPage()
-  const wchar_t* titles[] = {L"常规", L"界面", L"输入方案", L"词典",
-                             L"AI 功能"};
-  for (int i = 0; i < 5; ++i) {
+  const wchar_t* titles[] = {L"常规", L"按键",    L"界面", L"输入方案",
+                             L"词典", L"AI 功能", L"同步"};
+  for (int i = 0; i < kPageCount; ++i) {
     SendMessage(nav, LB_ADDSTRING, 0, (LPARAM)titles[i]);
   }
-  if (initial_page_ < 0 || initial_page_ >= 5)
+  if (initial_page_ < 0 || initial_page_ >= kPageCount)
     initial_page_ = 0;
   SendMessage(nav, LB_SETCURSEL, initial_page_, 0);
 
@@ -93,11 +95,14 @@ LRESULT SettingsDialog::OnInitDialog(UINT, WPARAM, LPARAM, BOOL&) {
 
   schemes_.Init(switcher_settings_);
   style_.Init(ui_style_settings_);
+  sync_.SetConfigurator(configurator_);
   page_windows_[0] = EmbedChild(general_.Create(host), host);
-  page_windows_[1] = EmbedChild(style_.CreateEmbedded(host), host);
-  page_windows_[2] = EmbedChild(schemes_.CreateEmbedded(host), host);
-  page_windows_[3] = EmbedChild(dict_.CreateEmbedded(host), host);
-  page_windows_[4] = EmbedChild(ai_.Create(host), host);
+  page_windows_[1] = EmbedChild(keys_.Create(host), host);
+  page_windows_[2] = EmbedChild(style_.CreateEmbedded(host), host);
+  page_windows_[3] = EmbedChild(schemes_.CreateEmbedded(host), host);
+  page_windows_[4] = EmbedChild(dict_.CreateEmbedded(host), host);
+  page_windows_[5] = EmbedChild(ai_.Create(host), host);
+  page_windows_[6] = EmbedChild(sync_.Create(host), host);
 
   ShowPage(initial_page_);
   CenterWindow();
@@ -151,7 +156,7 @@ LRESULT SettingsDialog::OnShowPage(UINT, WPARAM wParam, LPARAM, BOOL&) {
   // handoff from a second WeaselDeployer instance (tray menu): jump to the
   // requested page; the sending process already brought us to the foreground.
   int page = (int)wParam;
-  if (page < 0 || page >= 5)
+  if (page < 0 || page >= kPageCount)
     page = 0;
   ShowPage(page);
   return 0;
@@ -160,19 +165,19 @@ LRESULT SettingsDialog::OnShowPage(UINT, WPARAM wParam, LPARAM, BOOL&) {
 LRESULT SettingsDialog::OnNavSelChange(WORD, WORD, HWND, BOOL&) {
   HWND nav = GetDlgItem(IDC_NAV_LIST);
   int sel = (int)SendMessage(nav, LB_GETCURSEL, 0, 0);
-  if (sel >= 0 && sel < 5)
+  if (sel >= 0 && sel < kPageCount)
     ShowPage(sel);
   return 0;
 }
 
 void SettingsDialog::ShowPage(int index) {
-  if (index < 0 || index >= 5)
+  if (index < 0 || index >= kPageCount)
     return;
   // keep the navigation highlight in sync when the page is switched from
   // outside (e.g. the /dict handoff message)
   HWND nav = GetDlgItem(IDC_NAV_LIST);
   ::SendMessage(nav, LB_SETCURSEL, index, 0);
-  for (int i = 0; i < 5; ++i) {
+  for (int i = 0; i < kPageCount; ++i) {
     if (page_windows_[i]) {
       ::ShowWindow(page_windows_[i], i == index ? SW_SHOW : SW_HIDE);
     }
@@ -184,11 +189,15 @@ bool SettingsDialog::ApplyAll() {
   bool changed = false;
   if (general_.Apply())
     changed = true;
+  if (keys_.Apply())
+    changed = true;
   if (ai_.Apply())
     changed = true;
   if (style_.Apply())
     changed = true;
   if (schemes_.Apply())
+    changed = true;
+  if (sync_.Apply())
     changed = true;
   dict_.Apply();
   return changed;
