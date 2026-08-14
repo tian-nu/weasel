@@ -5,6 +5,7 @@
 #include <WeaselUtility.h>
 #include <commdlg.h>
 #include <wincodec.h>
+#include "TooltipHelper.h"
 #pragma comment(lib, "comdlg32.lib")
 #pragma comment(lib, "windowscodecs.lib")
 
@@ -112,6 +113,9 @@ LRESULT UIStyleSettingsDialog::OnInitDialog(UINT, WPARAM, LPARAM, BOOL&) {
     ::ShowWindow(GetDlgItem(IDOK), SW_HIDE);
     ::EnableWindow(GetDlgItem(IDOK), FALSE);
   }
+  AttachTooltip(m_hWnd, IDC_HELP_INLINE,
+                L"内联模式下，拼音直接显示在应用的光标处，悬浮窗只显示候选词，"
+                L"减少遮挡面积。\n部分老旧应用可能不支持。");
   Populate();
 
   CenterWindow();
