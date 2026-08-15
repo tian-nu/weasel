@@ -49,6 +49,10 @@ bool UIStyleSettingsDialog::Apply() {
   int index = color_schemes_.GetCurSel();
   if (index >= 0 && index < (int)preset_.size())
     settings_->SelectColorScheme(preset_[index].color_scheme_id);
+  // dark-mode scheme: applied automatically while the system is in dark mode
+  index = color_schemes_dark_.GetCurSel();
+  if (index >= 0 && index < (int)preset_.size())
+    settings_->SelectDarkColorScheme(preset_[index].color_scheme_id);
   // candidate font size shares style/font_point with the font picker
   int point = GetDlgItemInt(IDC_FONT_POINT, NULL, FALSE);
   if (point < 8)
@@ -69,22 +73,30 @@ void UIStyleSettingsDialog::Populate() {
   if (!settings_)
     return;
   std::string active(settings_->GetActiveColorScheme());
+  std::string active_dark(settings_->GetActiveDarkColorScheme());
   int active_index = -1;
+  int active_dark_index = -1;
   settings_->GetPresetColorSchemes(&preset_);
   for (size_t i = 0; i < preset_.size(); ++i) {
     std::wstring txt = u8tow(preset_[i].name);
     color_schemes_.AddString(txt.c_str());
+    color_schemes_dark_.AddString(txt.c_str());
     if (preset_[i].color_scheme_id == active) {
       active_index = i;
     }
+    if (preset_[i].color_scheme_id == active_dark) {
+      active_dark_index = i;
+    }
   }
   color_schemes_.SetCurSel(active_index);
+  color_schemes_dark_.SetCurSel(active_dark_index);
   Preview(active_index);
   loaded_ = true;
 }
 
 LRESULT UIStyleSettingsDialog::OnInitDialog(UINT, WPARAM, LPARAM, BOOL&) {
   color_schemes_.Attach(GetDlgItem(IDC_COLOR_SCHEME));
+  color_schemes_dark_.Attach(GetDlgItem(IDC_COLOR_SCHEME_DARK));
   preview_.Attach(GetDlgItem(IDC_PREVIEW));
   select_font_.Attach(GetDlgItem(IDC_SELECT_FONT));
 
@@ -185,11 +197,22 @@ LRESULT UIStyleSettingsDialog::OnSelectFont(WORD, WORD, HWND, BOOL&) {
   return 0;
 }
 
-LRESULT UIStyleSettingsDialog::OnHelp(WORD, WORD, HWND, BOOL&) {
-  ::MessageBox(m_hWnd,
-               L"内联模式下，拼音直接显示在应用的光标处，悬浮窗只显示候选词，减"
-               L"少遮挡面积。\n部分老旧应用可能不支持。",
-               L"说明", MB_OK | MB_ICONINFORMATION);
+LRESULT UIStyleSettingsDialog::OnHelp(WORD, WORD wID, HWND, BOOL&) {
+  const wchar_t* text = nullptr;
+  switch (wID) {
+    case IDC_HELP_DARK:
+      text =
+          L"系统切换到暗色模式时自动使用的配色。\n可与亮色配色不同，例如亮色选"
+          L"「简约白」、暗色选「简约黑」。";
+      break;
+    case IDC_HELP_INLINE:
+      text =
+          L"内联模式下，拼音直接显示在应用的光标处，悬浮窗只显示候选词，减"
+          L"少遮挡面积。\n部分老旧应用可能不支持。";
+      break;
+  }
+  if (text)
+    ::MessageBox(m_hWnd, text, L"说明", MB_OK | MB_ICONINFORMATION);
   return 0;
 }
 
@@ -304,6 +327,13 @@ LRESULT UIStyleSettingsDialog::OnColorSchemeSelChange(WORD, WORD, HWND, BOOL&) {
     Preview(index);
     modified_ = true;
   }
+  return 0;
+}
+
+// dark scheme only needs to be remembered; Apply persists it after the
+// reload, so no in-place customize here.
+LRESULT UIStyleSettingsDialog::OnDarkSchemeSelChange(WORD, WORD, HWND, BOOL&) {
+  modified_ = true;
   return 0;
 }
 

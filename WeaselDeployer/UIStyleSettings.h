@@ -18,6 +18,9 @@ class UIStyleSettings {
   std::string GetColorSchemePreview(const std::string& color_scheme_id);
   std::string GetActiveColorScheme();
   bool SelectColorScheme(const std::string& color_scheme_id);
+  // dark-mode scheme: applied automatically when the system is in dark mode
+  std::string GetActiveDarkColorScheme();
+  bool SelectDarkColorScheme(const std::string& color_scheme_id);
 
   RimeCustomSettings* settings() { return settings_; }
 

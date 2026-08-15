@@ -121,7 +121,7 @@ static int Run(LPTSTR lpCmdLine) {
   bool dict_management = !wcscmp(L"/dict", lpCmdLine);
   if (dict_management) {
     // open the unified settings window on the dictionary page
-    return configurator.Run(false, 4);
+    return configurator.Run(false, 3);
   }
 
   bool sync_user_dict = !wcscmp(L"/sync", lpCmdLine);

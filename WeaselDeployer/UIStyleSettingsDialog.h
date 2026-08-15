@@ -25,8 +25,9 @@ class UIStyleSettingsDialog : public CDialogImpl<UIStyleSettingsDialog> {
   COMMAND_ID_HANDLER(IDC_SELECT_FONT, OnSelectFont)
   COMMAND_ID_HANDLER(IDC_FONT_POINT, OnFontPointChanged)
   COMMAND_ID_HANDLER(IDC_CHECK_INLINE, OnInlineChanged)
-  COMMAND_ID_HANDLER(IDC_HELP_INLINE, OnHelp)
+  COMMAND_RANGE_HANDLER(IDC_HELP_INLINE, IDC_HELP_DARK, OnHelp)
   COMMAND_HANDLER(IDC_COLOR_SCHEME, LBN_SELCHANGE, OnColorSchemeSelChange)
+  COMMAND_HANDLER(IDC_COLOR_SCHEME_DARK, LBN_SELCHANGE, OnDarkSchemeSelChange)
   END_MSG_MAP()
 
   LRESULT OnInitDialog(UINT, WPARAM, LPARAM, BOOL&);
@@ -37,6 +38,7 @@ class UIStyleSettingsDialog : public CDialogImpl<UIStyleSettingsDialog> {
   LRESULT OnInlineChanged(WORD, WORD, HWND, BOOL&);
   LRESULT OnHelp(WORD, WORD wID, HWND, BOOL&);
   LRESULT OnColorSchemeSelChange(WORD, WORD, HWND, BOOL&);
+  LRESULT OnDarkSchemeSelChange(WORD, WORD, HWND, BOOL&);
 
   void Populate();
   void Preview(int index);
@@ -48,6 +50,7 @@ class UIStyleSettingsDialog : public CDialogImpl<UIStyleSettingsDialog> {
   std::vector<ColorSchemeInfo> preset_;
 
   CListBox color_schemes_;
+  CListBox color_schemes_dark_;
   CStatic preview_;
   CImage image_;
   CBitmap preview_bmp_;  // WIC-decoded preview bitmap (GDI+ avoided)

@@ -73,3 +73,20 @@ bool UIStyleSettings::SelectColorScheme(const std::string& color_scheme_id) {
                          color_scheme_id.c_str());
   return true;
 }
+
+std::string UIStyleSettings::GetActiveDarkColorScheme() {
+  RimeConfig config = {0};
+  api_->settings_get_config(settings_, &config);
+  const char* value =
+      rime_get_api()->config_get_cstring(&config, "style/color_scheme_dark");
+  if (!value)
+    return std::string();
+  return std::string(value);
+}
+
+bool UIStyleSettings::SelectDarkColorScheme(
+    const std::string& color_scheme_id) {
+  api_->customize_string(settings_, "style/color_scheme_dark",
+                         color_scheme_id.c_str());
+  return true;
+}

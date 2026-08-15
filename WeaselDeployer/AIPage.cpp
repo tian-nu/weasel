@@ -14,6 +14,16 @@ std::wstring CustomFilePath() {
   return WeaselUserDataPath() / L"ai_pinyin.custom.yaml";
 }
 
+// directory holding the language model files
+std::wstring ModelDir() {
+  return (WeaselUserDataPath() / L"ai").wstring();
+}
+
+// the model file the ai_ranker actually loads (fixed in the schema)
+std::wstring ActiveModelPath() {
+  return ModelDir() + L"\\model.lmbin";
+}
+
 // read the current patch; returns the "switches/1/reset" value (-1 if absent)
 int ReadCurrentMode() {
   std::wifstream in(CustomFilePath().c_str());
@@ -88,6 +98,121 @@ LRESULT AIPage::OnHeadChanged(WORD, WORD, HWND, BOOL&) {
   return 0;
 }
 
+LRESULT AIPage::OnOpenModelDir(WORD, WORD, HWND, BOOL&) {
+  std::error_code ec;
+  std::filesystem::path dir = ModelDir();
+  if (!std::filesystem::exists(dir, ec))
+    std::filesystem::create_directories(dir, ec);
+  ::ShellExecuteW(NULL, L"open", dir.c_str(), NULL, NULL, SW_SHOW);
+  return 0;
+}
+
+LRESULT AIPage::OnHelp(WORD, WORD wID, HWND, BOOL&) {
+  const wchar_t* text = nullptr;
+  switch (wID) {
+    case IDC_HELP_MODE:
+      text =
+          L"纯传统：不使用 AI，按词典默认顺序出候选。\nAI 混合（默认）：前几个"
+          L"候选由语言模型按上下文概率排列，其余保持传统顺序。\n纯 "
+          L"AI：全部候选按上下文概率排列。\n输入中可按 Ctrl+` 快速切换。";
+      break;
+    case IDC_HELP_MODEL:
+      text =
+          L"语言模型文件（.lmbin）放在数据目录的 ai 文件夹中。\n双击列表中的"
+          L"模型文件即可切换为当前模型（复制为 model.lmbin），切换后重新部署"
+          L"生效。";
+      break;
+  }
+  if (text)
+    ::MessageBox(m_hWnd, text, L"说明", MB_OK | MB_ICONINFORMATION);
+  return 0;
+}
+
+// fill the model list with *.lmbin files from the ai directory; model.lmbin
+// (the file the schema loads) is marked as active
+void AIPage::PopulateModels() {
+  ::SendDlgItemMessageW(m_hWnd, IDC_AI_MODEL_LIST, LB_RESETCONTENT, 0, 0);
+  model_files_.clear();
+  std::error_code ec;
+  std::filesystem::path dir = ModelDir();
+  if (!std::filesystem::exists(dir, ec))
+    return;
+  int active = -1;
+  for (const auto& entry : std::filesystem::directory_iterator(dir, ec)) {
+    if (ec)
+      break;
+    if (!entry.is_regular_file(ec) || ec)
+      continue;
+    if (entry.path().extension() != L".lmbin")
+      continue;
+    std::wstring name = entry.path().filename().wstring();
+    // size in MB with one decimal
+    uintmax_t bytes = entry.file_size(ec);
+    if (ec) {
+      ec.clear();
+      bytes = 0;
+    }
+    uintmax_t mb10 = (bytes * 10 + 512 * 1024) / (1024 * 1024);
+    WCHAR line[512] = {0};
+    int n = _snwprintf_s(line, _TRUNCATE, L"%s （%llu.%llu MB）", name.c_str(),
+                         (unsigned long long)(mb10 / 10),
+                         (unsigned long long)(mb10 % 10));
+    bool is_active = _wcsicmp(name.c_str(), L"model.lmbin") == 0;
+    if (is_active && n > 0)
+      wcscat_s(line, L"　← 使用中");
+    ::SendDlgItemMessageW(m_hWnd, IDC_AI_MODEL_LIST, LB_ADDSTRING, 0,
+                          (LPARAM)line);
+    if (is_active)
+      active = (int)model_files_.size();
+    model_files_.push_back(name);
+  }
+  ::SendDlgItemMessageW(m_hWnd, IDC_AI_MODEL_LIST, LB_SETCURSEL,
+                        (WPARAM)active, 0);
+}
+
+// refresh the 已就绪/未安装 status line from model.lmbin presence
+void AIPage::UpdateModelStatus() {
+  std::error_code ec;
+  bool has_model = std::filesystem::exists(ActiveModelPath(), ec);
+  // status prefix + path on one line; SS_ENDELLIPSIS truncates the tail so the
+  // status word (已就绪/未安装) stays visible even when the path is long.
+  std::wstring status =
+      (has_model ? L"已就绪  " : L"未安装  ") + ActiveModelPath();
+  SetDlgItemTextW(IDC_AI_MODEL_PATH, status.c_str());
+}
+
+// double-click: copy the selected model over model.lmbin so the schema's
+// fixed model path picks it up
+LRESULT AIPage::OnModelActivate(WORD, WORD, HWND, BOOL&) {
+  LRESULT sel =
+      ::SendDlgItemMessageW(m_hWnd, IDC_AI_MODEL_LIST, LB_GETCURSEL, 0, 0);
+  if (sel < 0 || sel >= (LRESULT)model_files_.size())
+    return 0;
+  const std::wstring name = model_files_[(size_t)sel];
+  if (_wcsicmp(name.c_str(), L"model.lmbin") == 0)
+    return 0;  // already active
+  if (::MessageBox(m_hWnd,
+                   (L"将「" + name + L"」设为当前模型？\n会覆盖 model.lmbin，切换后重新部署生效。")
+                       .c_str(),
+                   L"【小狼毫】", MB_YESNO | MB_ICONQUESTION) != IDYES)
+    return 0;
+  std::error_code ec;
+  std::filesystem::path dir = ModelDir();
+  std::filesystem::copy_file(dir / name, dir / L"model.lmbin",
+                             std::filesystem::copy_options::overwrite_existing,
+                             ec);
+  if (ec) {
+    ::MessageBox(m_hWnd, L"切换模型失败，请检查文件是否被占用。", L"【小狼毫】",
+                 MB_OK | MB_ICONERROR);
+    return 0;
+  }
+  UpdateModelStatus();
+  PopulateModels();
+  ::MessageBox(m_hWnd, L"已切换模型，重新部署（或重启输入法）后生效。",
+               L"【小狼毫】", MB_OK | MB_ICONINFORMATION);
+  return 0;
+}
+
 void AIPage::Load() {
   // mode: schema default is reset: 1 (AI hybrid); a custom file overrides it.
   int mode = ReadCurrentMode();
@@ -104,13 +229,8 @@ void AIPage::Load() {
   _itow_s(head, buf, 10);
   SetDlgItemTextW(IDC_AI_HEAD, buf);
 
-  std::wstring model_path = WeaselUserDataPath() / L"ai" / L"model.lmbin";
-  std::error_code ec;
-  bool has_model = std::filesystem::exists(model_path, ec);
-  // status prefix + path on one line; SS_ENDELLIPSIS truncates the tail so the
-  // status word (已就绪/未安装) stays visible even when the path is long.
-  std::wstring status = (has_model ? L"已就绪  " : L"未安装  ") + model_path;
-  SetDlgItemTextW(IDC_AI_MODEL_PATH, status.c_str());
+  UpdateModelStatus();
+  PopulateModels();
   modified_ = false;
 }
 

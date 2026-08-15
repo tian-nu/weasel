@@ -75,8 +75,8 @@ LRESULT SettingsDialog::OnInitDialog(UINT, WPARAM, LPARAM, BOOL&) {
     }
   }
   // page titles; order must match ShowPage()
-  const wchar_t* titles[] = {L"常规", L"按键",    L"界面", L"输入方案",
-                             L"词典", L"AI 功能", L"同步"};
+  const wchar_t* titles[] = {L"常规", L"界面", L"输入方案", L"词典",
+                             L"AI 功能"};
   for (int i = 0; i < kPageCount; ++i) {
     SendMessage(nav, LB_ADDSTRING, 0, (LPARAM)titles[i]);
   }
@@ -96,14 +96,12 @@ LRESULT SettingsDialog::OnInitDialog(UINT, WPARAM, LPARAM, BOOL&) {
 
   schemes_.Init(switcher_settings_);
   style_.Init(ui_style_settings_);
-  sync_.SetConfigurator(configurator_);
+  dict_.SetConfigurator(configurator_);
   page_windows_[0] = EmbedChild(general_.Create(host), host);
-  page_windows_[1] = EmbedChild(keys_.Create(host), host);
-  page_windows_[2] = EmbedChild(style_.CreateEmbedded(host), host);
-  page_windows_[3] = EmbedChild(schemes_.CreateEmbedded(host), host);
-  page_windows_[4] = EmbedChild(dict_.CreateEmbedded(host), host);
-  page_windows_[5] = EmbedChild(ai_.Create(host), host);
-  page_windows_[6] = EmbedChild(sync_.Create(host), host);
+  page_windows_[1] = EmbedChild(style_.CreateEmbedded(host), host);
+  page_windows_[2] = EmbedChild(schemes_.CreateEmbedded(host), host);
+  page_windows_[3] = EmbedChild(dict_.CreateEmbedded(host), host);
+  page_windows_[4] = EmbedChild(ai_.Create(host), host);
 
   ShowPage(initial_page_);
   CenterWindow();
@@ -192,15 +190,11 @@ bool SettingsDialog::ApplyAll() {
   bool changed = false;
   if (general_.Apply())
     changed = true;
-  if (keys_.Apply())
-    changed = true;
   if (ai_.Apply())
     changed = true;
   if (style_.Apply())
     changed = true;
   if (schemes_.Apply())
-    changed = true;
-  if (sync_.Apply())
     changed = true;
   dict_.Apply();
   return changed;

@@ -3,8 +3,6 @@
 #include "resource.h"
 #include "GeneralPage.h"
 #include "AIPage.h"
-#include "KeysPage.h"
-#include "SyncPage.h"
 #include "SwitcherSettingsDialog.h"
 #include "UIStyleSettingsDialog.h"
 #include "DictManagementDialog.h"
@@ -16,10 +14,10 @@
 static const UINT kWM_ShowPage = WM_APP + 101;
 
 // page count for the nav list and page_windows_
-static const int kPageCount = 7;
+static const int kPageCount = 5;
 
 // The single settings window: left navigation list + stacked pages
-// (General / Keys / UI style / Schemes / Dictionary / AI / Sync).
+// (General / UI style / Schemes / Dictionary / AI).
 class SettingsDialog : public CDialogImpl<SettingsDialog> {
  public:
   enum { IDD = IDD_SETTINGS_MAIN };
@@ -60,12 +58,10 @@ class SettingsDialog : public CDialogImpl<SettingsDialog> {
   UIStyleSettings* ui_style_settings_;
 
   GeneralPage general_;
-  KeysPage keys_;
   UIStyleSettingsDialog style_;
   SwitcherSettingsDialog schemes_;
   DictManagementDialog dict_;
   AIPage ai_;
-  SyncPage sync_;
 
   HWND page_windows_[kPageCount];
   HFONT nav_font_;

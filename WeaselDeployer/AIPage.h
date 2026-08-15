@@ -2,8 +2,12 @@
 
 #include "resource.h"
 
-// AI page: default AI mode (traditional / hybrid / pure) and head count.
-// Persists to ai_pinyin.custom.yaml via patch.
+#include <string>
+#include <vector>
+
+// AI page: default AI mode (traditional / hybrid / pure), head count and
+// language-model files. The mode/head persist to ai_pinyin.custom.yaml via
+// patch; the model list switches the active model.lmbin.
 class AIPage : public CDialogImpl<AIPage> {
  public:
   enum { IDD = IDD_AI_PAGE };
@@ -18,6 +22,9 @@ class AIPage : public CDialogImpl<AIPage> {
   COMMAND_ID_HANDLER(IDC_AI_MODE_HYBRID, OnModeChanged)
   COMMAND_ID_HANDLER(IDC_AI_MODE_PURE, OnModeChanged)
   COMMAND_ID_HANDLER(IDC_AI_HEAD, OnHeadChanged)
+  COMMAND_ID_HANDLER(IDC_OPEN_MODEL_DIR, OnOpenModelDir)
+  COMMAND_RANGE_HANDLER(IDC_HELP_MODE, IDC_HELP_MODEL, OnHelp)
+  COMMAND_HANDLER(IDC_AI_MODEL_LIST, LBN_DBLCLK, OnModelActivate)
   END_MSG_MAP()
 
   void Load();
@@ -28,6 +35,14 @@ class AIPage : public CDialogImpl<AIPage> {
   LRESULT OnClose(UINT, WPARAM, LPARAM, BOOL&);
   LRESULT OnModeChanged(WORD, WORD, HWND, BOOL&);
   LRESULT OnHeadChanged(WORD, WORD, HWND, BOOL&);
+  LRESULT OnOpenModelDir(WORD, WORD, HWND, BOOL&);
+  LRESULT OnHelp(WORD, WORD wID, HWND, BOOL&);
+  // double-click a model file: copy it over model.lmbin (active model)
+  LRESULT OnModelActivate(WORD, WORD, HWND, BOOL&);
+
+  void PopulateModels();
+  void UpdateModelStatus();
 
   bool modified_;
+  std::vector<std::wstring> model_files_;  // list row -> file name
 };
