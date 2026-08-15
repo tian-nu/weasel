@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "GeneralPage.h"
+#include "UITheme.h"
 #include <WeaselUtility.h>
 #include <rime_api.h>
 #include <rime_levers_api.h>
@@ -7,6 +8,20 @@
 #include <vector>
 #pragma warning(disable : 4005)
 #include "WeaselDeployer.h"
+
+// theme-aware control backgrounds; no-op in light mode
+LRESULT GeneralPage::OnCtlColor(UINT msg,
+                                WPARAM wParam,
+                                LPARAM lParam,
+                                BOOL& handled) {
+  LRESULT res = UITheme::HandleCtlColor(msg, (HDC)wParam, (HWND)lParam);
+  if (res) {
+    handled = TRUE;
+    return res;
+  }
+  handled = FALSE;
+  return 0;
+}
 
 namespace {
 

@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "SettingsDialog.h"
 #include "Configurator.h"
+#include "UITheme.h"
 #include <WeaselUtility.h>
 #pragma warning(disable : 4005)
 #include "WeaselDeployer.h"
@@ -59,6 +60,12 @@ SettingsDialog::~SettingsDialog() {
 }
 
 LRESULT SettingsDialog::OnInitDialog(UINT, WPARAM, LPARAM, BOOL&) {
+  // theme the whole settings window (dark/light) before pages are created so
+  // they pick up the correct colors from the first paint
+  UITheme::InitForProcess();
+  UITheme::Apply(m_hWnd);
+  CheckDlgButton(IDC_TOGGLE_THEME,
+                 UITheme::IsDark() ? BST_CHECKED : BST_UNCHECKED);
   HWND nav = GetDlgItem(IDC_NAV_LIST);
   // owner-draw styling: bigger semibold font + comfortable row height
   nav_font_ = CreateNavFont(nav);
@@ -123,9 +130,13 @@ LRESULT SettingsDialog::OnDrawItem(UINT, WPARAM, LPARAM lParam, BOOL&) {
   HDC dc = dis->hDC;
   RECT rc = dis->rcItem;
   bool selected = (dis->itemState & ODS_SELECTED) != 0;
+  bool dark = UITheme::IsDark();
   // modern selection: warm tinted background + orange accent bar on the left
-  COLORREF bg = selected ? RGB(247, 234, 226) : GetSysColor(COLOR_WINDOW);
-  COLORREF fg = selected ? RGB(70, 56, 48) : GetSysColor(COLOR_WINDOWTEXT);
+  COLORREF bg = selected ? (dark ? RGB(64, 52, 44) : RGB(247, 234, 226))
+                         : (dark ? RGB(32, 32, 32) : GetSysColor(COLOR_WINDOW));
+  COLORREF fg =
+      selected ? (dark ? RGB(247, 234, 226) : RGB(70, 56, 48))
+               : (dark ? RGB(224, 224, 224) : GetSysColor(COLOR_WINDOWTEXT));
   HBRUSH brush = ::CreateSolidBrush(bg);
   ::FillRect(dc, &rc, brush);
   ::DeleteObject(brush);
@@ -168,6 +179,28 @@ LRESULT SettingsDialog::OnNavSelChange(WORD, WORD, HWND, BOOL&) {
   int sel = (int)SendMessage(nav, LB_GETCURSEL, 0, 0);
   if (sel >= 0 && sel < kPageCount)
     ShowPage(sel);
+  return 0;
+}
+
+// dark/light toggle: switch immediately, remember the choice, repaint the
+// whole window tree (pages included)
+LRESULT SettingsDialog::OnToggleTheme(WORD, WORD, HWND, BOOL&) {
+  UITheme::SetDark(!UITheme::IsDark());
+  UITheme::Apply(m_hWnd);
+  return 0;
+}
+
+// theme-aware control backgrounds; no-op in light mode
+LRESULT SettingsDialog::OnCtlColor(UINT msg,
+                                   WPARAM wParam,
+                                   LPARAM lParam,
+                                   BOOL& handled) {
+  LRESULT res = UITheme::HandleCtlColor(msg, (HDC)wParam, (HWND)lParam);
+  if (res) {
+    handled = TRUE;
+    return res;
+  }
+  handled = FALSE;
   return 0;
 }
 

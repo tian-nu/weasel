@@ -197,6 +197,7 @@
     <ClInclude Include="targetver.h" />
     <ClInclude Include="UIStyleSettings.h" />
     <ClInclude Include="UIStyleSettingsDialog.h" />
+    <ClInclude Include="UITheme.h" />
     <ClInclude Include="WeaselDeployer.h" />
   </ItemGroup>
   <ItemGroup>
@@ -215,6 +216,7 @@
     <ClCompile Include="SwitcherSettingsDialog.cpp" />
     <ClCompile Include="UIStyleSettings.cpp" />
     <ClCompile Include="UIStyleSettingsDialog.cpp" />
+    <ClCompile Include="UITheme.cpp" />
     <ClCompile Include="WeaselDeployer.cpp" />
   </ItemGroup>
   <ItemGroup>

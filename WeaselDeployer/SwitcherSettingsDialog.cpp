@@ -1,12 +1,50 @@
 #include "stdafx.h"
 #include "SwitcherSettingsDialog.h"
 #include "Configurator.h"
+#include "UITheme.h"
 #include <algorithm>
 #include <set>
 #include <rime_levers_api.h>
 #include <WeaselUtility.h>
 #include <thread>
 #include "WeaselDeployer.h"
+
+// theme-aware control backgrounds; no-op in light mode
+LRESULT SwitcherSettingsDialog::OnCtlColor(UINT msg,
+                                           WPARAM wParam,
+                                           LPARAM lParam,
+                                           BOOL& handled) {
+  LRESULT res = UITheme::HandleCtlColor(msg, (HDC)wParam, (HWND)lParam);
+  if (res) {
+    handled = TRUE;
+    return res;
+  }
+  handled = FALSE;
+  return 0;
+}
+
+// dark item colors for the schema list; default drawing in light mode
+LRESULT SwitcherSettingsDialog::OnSchemaListCustomDraw(int,
+                                                       LPNMHDR hdr,
+                                                       BOOL& handled) {
+  if (!UITheme::IsDark()) {
+    handled = FALSE;
+    return CDRF_DODEFAULT;
+  }
+  LPNMCUSTOMDRAW cd = reinterpret_cast<LPNMCUSTOMDRAW>(hdr);
+  if (cd->dwDrawStage == CDDS_PREPAINT) {
+    handled = TRUE;
+    return CDRF_NOTIFYITEMDRAW;
+  }
+  if (cd->dwDrawStage == CDDS_ITEMPREPAINT) {
+    cd->clrText = RGB(232, 232, 232);
+    cd->clrTextBk = RGB(48, 48, 48);
+    handled = TRUE;
+    return CDRF_DODEFAULT;
+  }
+  handled = FALSE;
+  return CDRF_DODEFAULT;
+}
 
 SwitcherSettingsDialog::SwitcherSettingsDialog()
     : settings_(nullptr),

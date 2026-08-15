@@ -18,6 +18,8 @@ class AIPage : public CDialogImpl<AIPage> {
   BEGIN_MSG_MAP(AIPage)
   MESSAGE_HANDLER(WM_INITDIALOG, OnInitDialog)
   MESSAGE_HANDLER(WM_CLOSE, OnClose)
+  MESSAGE_HANDLER(WM_APP + 1, OnModelCopied)
+  MESSAGE_RANGE_HANDLER(WM_CTLCOLORMSGBOX, WM_CTLCOLORSTATIC, OnCtlColor)
   COMMAND_ID_HANDLER(IDC_AI_MODE_OFF, OnModeChanged)
   COMMAND_ID_HANDLER(IDC_AI_MODE_HYBRID, OnModeChanged)
   COMMAND_ID_HANDLER(IDC_AI_MODE_PURE, OnModeChanged)
@@ -33,6 +35,9 @@ class AIPage : public CDialogImpl<AIPage> {
  protected:
   LRESULT OnInitDialog(UINT, WPARAM, LPARAM, BOOL&);
   LRESULT OnClose(UINT, WPARAM, LPARAM, BOOL&);
+  // posted by the copy worker thread when model switching finishes
+  LRESULT OnModelCopied(UINT, WPARAM, LPARAM, BOOL&);
+  LRESULT OnCtlColor(UINT, WPARAM, LPARAM, BOOL&);
   LRESULT OnModeChanged(WORD, WORD, HWND, BOOL&);
   LRESULT OnHeadChanged(WORD, WORD, HWND, BOOL&);
   LRESULT OnOpenModelDir(WORD, WORD, HWND, BOOL&);
@@ -44,5 +49,6 @@ class AIPage : public CDialogImpl<AIPage> {
   void UpdateModelStatus();
 
   bool modified_;
+  bool copying_ = false;  // a model copy is running on a worker thread
   std::vector<std::wstring> model_files_;  // list row -> file name
 };

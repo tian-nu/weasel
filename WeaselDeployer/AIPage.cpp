@@ -1,11 +1,27 @@
 #include "stdafx.h"
 #include "AIPage.h"
+#include "UITheme.h"
 #include <WeaselUtility.h>
 #include <fstream>
 #include <string>
 #include <filesystem>
+#include <thread>
 #pragma warning(disable : 4005)
 #include "WeaselDeployer.h"
+
+// theme-aware control backgrounds; no-op in light mode
+LRESULT AIPage::OnCtlColor(UINT msg,
+                           WPARAM wParam,
+                           LPARAM lParam,
+                           BOOL& handled) {
+  LRESULT res = UITheme::HandleCtlColor(msg, (HDC)wParam, (HWND)lParam);
+  if (res) {
+    handled = TRUE;
+    return res;
+  }
+  handled = FALSE;
+  return 0;
+}
 
 namespace {
 
@@ -182,8 +198,12 @@ void AIPage::UpdateModelStatus() {
 }
 
 // double-click: copy the selected model over model.lmbin so the schema's
-// fixed model path picks it up
+// fixed model path picks it up. The copy runs on a worker thread (model
+// files can be hundreds of MB); the UI thread stays responsive and picks
+// up the result via a posted message.
 LRESULT AIPage::OnModelActivate(WORD, WORD, HWND, BOOL&) {
+  if (copying_)
+    return 0;  // a switch is already in flight
   LRESULT sel =
       ::SendDlgItemMessageW(m_hWnd, IDC_AI_MODEL_LIST, LB_GETCURSEL, 0, 0);
   if (sel < 0 || sel >= (LRESULT)model_files_.size())
@@ -198,12 +218,27 @@ LRESULT AIPage::OnModelActivate(WORD, WORD, HWND, BOOL&) {
               .c_str(),
           L"【小狼毫】", MB_YESNO | MB_ICONQUESTION) != IDYES)
     return 0;
-  std::error_code ec;
-  std::filesystem::path dir = ModelDir();
-  std::filesystem::copy_file(dir / name, dir / L"model.lmbin",
-                             std::filesystem::copy_options::overwrite_existing,
-                             ec);
-  if (ec) {
+  copying_ = true;
+  ::EnableWindow(GetDlgItem(IDC_AI_MODEL_LIST), FALSE);
+  SetDlgItemTextW(IDC_AI_MODEL_PATH, L"正在切换模型，请稍候…");
+  const std::wstring src = (std::filesystem::path(ModelDir()) / name).wstring();
+  const std::wstring dst = ActiveModelPath();
+  HWND notify = m_hWnd;  // captured by value; the thread never touches `this`
+  std::thread([src, dst, notify]() {
+    std::error_code ec;
+    std::filesystem::copy_file(
+        src, dst, std::filesystem::copy_options::overwrite_existing, ec);
+    ::PostMessage(notify, WM_APP + 1, ec ? 0 : 1, 0);
+  }).detach();
+  return 0;
+}
+
+// worker-thread completion: re-enable the list and reflect the result
+LRESULT AIPage::OnModelCopied(UINT, WPARAM wParam, LPARAM, BOOL&) {
+  copying_ = false;
+  ::EnableWindow(GetDlgItem(IDC_AI_MODEL_LIST), TRUE);
+  if (!wParam) {
+    UpdateModelStatus();
     ::MessageBox(m_hWnd, L"切换模型失败，请检查文件是否被占用。", L"【小狼毫】",
                  MB_OK | MB_ICONERROR);
     return 0;

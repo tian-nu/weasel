@@ -2,11 +2,26 @@
 #include "UIStyleSettingsDialog.h"
 #include "UIStyleSettings.h"
 #include "Configurator.h"
+#include "UITheme.h"
 #include <WeaselUtility.h>
 #include <commdlg.h>
 #include <wincodec.h>
 #pragma comment(lib, "comdlg32.lib")
 #pragma comment(lib, "windowscodecs.lib")
+
+// theme-aware control backgrounds; no-op in light mode
+LRESULT UIStyleSettingsDialog::OnCtlColor(UINT msg,
+                                          WPARAM wParam,
+                                          LPARAM lParam,
+                                          BOOL& handled) {
+  LRESULT res = UITheme::HandleCtlColor(msg, (HDC)wParam, (HWND)lParam);
+  if (res) {
+    handled = TRUE;
+    return res;
+  }
+  handled = FALSE;
+  return 0;
+}
 
 UIStyleSettingsDialog::UIStyleSettingsDialog()
     : settings_(nullptr), loaded_(false), embedded_(false), modified_(false) {}

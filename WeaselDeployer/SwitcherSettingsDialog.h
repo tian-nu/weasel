@@ -29,10 +29,12 @@ class SwitcherSettingsDialog : public CDialogImpl<SwitcherSettingsDialog> {
   MESSAGE_HANDLER(WM_INITDIALOG, OnInitDialog)
   MESSAGE_HANDLER(WM_CLOSE, OnClose)
   MESSAGE_HANDLER(kWM_SchemataRefreshed, OnSchemataRefreshed)
+  MESSAGE_RANGE_HANDLER(WM_CTLCOLORMSGBOX, WM_CTLCOLORSTATIC, OnCtlColor)
   COMMAND_HANDLER(IDC_GET_SCHEMATA, BN_CLICKED, OnGetSchemata)
   COMMAND_ID_HANDLER(IDOK, OnOK)
   COMMAND_ID_HANDLER(IDC_HOTKEYS, OnHotkeysChanged)
   NOTIFY_HANDLER(IDC_SCHEMA_LIST, LVN_ITEMCHANGED, OnSchemaListItemChanged)
+  NOTIFY_HANDLER(IDC_SCHEMA_LIST, NM_CUSTOMDRAW, OnSchemaListCustomDraw)
   END_MSG_MAP()
 
   LRESULT OnInitDialog(UINT, WPARAM, LPARAM, BOOL&);
@@ -42,6 +44,8 @@ class SwitcherSettingsDialog : public CDialogImpl<SwitcherSettingsDialog> {
   LRESULT OnOK(WORD, WORD, HWND, BOOL&);
   LRESULT OnHotkeysChanged(WORD, WORD, HWND, BOOL&);
   LRESULT OnSchemaListItemChanged(int, LPNMHDR, BOOL&);
+  LRESULT OnSchemaListCustomDraw(int, LPNMHDR, BOOL&);
+  LRESULT OnCtlColor(UINT, WPARAM, LPARAM, BOOL&);
 
   void Populate();
   void ShowDetails(RimeSchemaInfo* info);

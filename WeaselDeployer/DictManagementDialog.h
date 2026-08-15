@@ -26,6 +26,7 @@ class DictManagementDialog : public CDialogImpl<DictManagementDialog> {
   BEGIN_MSG_MAP(DictManagementDialog)
   MESSAGE_HANDLER(WM_INITDIALOG, OnInitDialog)
   MESSAGE_HANDLER(WM_CLOSE, OnClose)
+  MESSAGE_RANGE_HANDLER(WM_CTLCOLORMSGBOX, WM_CTLCOLORSTATIC, OnCtlColor)
   COMMAND_ID_HANDLER(IDC_BACKUP, OnBackup)
   COMMAND_ID_HANDLER(IDC_RESTORE, OnRestore)
   COMMAND_ID_HANDLER(IDC_EXPORT, OnExport)
@@ -42,6 +43,7 @@ class DictManagementDialog : public CDialogImpl<DictManagementDialog> {
 
   LRESULT OnInitDialog(UINT, WPARAM, LPARAM, BOOL&);
   LRESULT OnClose(UINT, WPARAM, LPARAM, BOOL&);
+  LRESULT OnCtlColor(UINT, WPARAM, LPARAM, BOOL&);
   LRESULT OnBackup(WORD, WORD code, HWND, BOOL&);
   LRESULT OnRestore(WORD, WORD code, HWND, BOOL&);
   LRESULT OnExport(WORD, WORD code, HWND, BOOL&);

@@ -17,6 +17,7 @@ class GeneralPage : public CDialogImpl<GeneralPage> {
   BEGIN_MSG_MAP(GeneralPage)
   MESSAGE_HANDLER(WM_INITDIALOG, OnInitDialog)
   MESSAGE_HANDLER(WM_CLOSE, OnClose)
+  MESSAGE_RANGE_HANDLER(WM_CTLCOLORMSGBOX, WM_CTLCOLORSTATIC, OnCtlColor)
   COMMAND_ID_HANDLER(IDC_RADIO_HORIZONTAL, OnLayoutChanged)
   COMMAND_ID_HANDLER(IDC_RADIO_VERTICAL, OnLayoutChanged)
   COMMAND_ID_HANDLER(IDC_CHECK_TRAY_ICON, OnTrayIconChanged)
@@ -48,6 +49,7 @@ class GeneralPage : public CDialogImpl<GeneralPage> {
  protected:
   LRESULT OnInitDialog(UINT, WPARAM, LPARAM, BOOL&);
   LRESULT OnClose(UINT, WPARAM, LPARAM, BOOL&);
+  LRESULT OnCtlColor(UINT, WPARAM, LPARAM, BOOL&);
   LRESULT OnLayoutChanged(WORD, WORD, HWND, BOOL&);
   LRESULT OnTrayIconChanged(WORD, WORD, HWND, BOOL&);
   LRESULT OnPageSizeChanged(WORD, WORD, HWND, BOOL&);
