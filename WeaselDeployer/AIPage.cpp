@@ -108,9 +108,8 @@ void AIPage::Load() {
   std::error_code ec;
   bool has_model = std::filesystem::exists(model_path, ec);
   // status prefix + path on one line; SS_ENDELLIPSIS truncates the tail so the
-  // status word ("已就绪"/"未安装") stays visible even when the path is long.
-  std::wstring status =
-      (has_model ? L"已就绪  " : L"未安装  ") + model_path;
+  // status word (已就绪/未安装) stays visible even when the path is long.
+  std::wstring status = (has_model ? L"已就绪  " : L"未安装  ") + model_path;
   SetDlgItemTextW(IDC_AI_MODEL_PATH, status.c_str());
   modified_ = false;
 }
