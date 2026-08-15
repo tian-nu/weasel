@@ -166,8 +166,8 @@ void AIPage::PopulateModels() {
       active = (int)model_files_.size();
     model_files_.push_back(name);
   }
-  ::SendDlgItemMessageW(m_hWnd, IDC_AI_MODEL_LIST, LB_SETCURSEL,
-                        (WPARAM)active, 0);
+  ::SendDlgItemMessageW(m_hWnd, IDC_AI_MODEL_LIST, LB_SETCURSEL, (WPARAM)active,
+                        0);
 }
 
 // refresh the 已就绪/未安装 status line from model.lmbin presence
@@ -191,10 +191,12 @@ LRESULT AIPage::OnModelActivate(WORD, WORD, HWND, BOOL&) {
   const std::wstring name = model_files_[(size_t)sel];
   if (_wcsicmp(name.c_str(), L"model.lmbin") == 0)
     return 0;  // already active
-  if (::MessageBox(m_hWnd,
-                   (L"将「" + name + L"」设为当前模型？\n会覆盖 model.lmbin，切换后重新部署生效。")
-                       .c_str(),
-                   L"【小狼毫】", MB_YESNO | MB_ICONQUESTION) != IDYES)
+  if (::MessageBox(
+          m_hWnd,
+          (L"将「" + name +
+           L"」设为当前模型？\n会覆盖 model.lmbin，切换后重新部署生效。")
+              .c_str(),
+          L"【小狼毫】", MB_YESNO | MB_ICONQUESTION) != IDYES)
     return 0;
   std::error_code ec;
   std::filesystem::path dir = ModelDir();

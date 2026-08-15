@@ -527,7 +527,8 @@ void GeneralPage::Load() {
   CheckRadioButton(IDC_KEY_SHIFT, IDC_KEY_NONE, sw);
   CheckDlgButton(IDC_PAGE_COMMA, st.page_comma ? BST_CHECKED : BST_UNCHECKED);
   CheckDlgButton(IDC_PAGE_MINUS, st.page_minus ? BST_CHECKED : BST_UNCHECKED);
-  CheckDlgButton(IDC_PAGE_BRACKET, st.page_bracket ? BST_CHECKED : BST_UNCHECKED);
+  CheckDlgButton(IDC_PAGE_BRACKET,
+                 st.page_bracket ? BST_CHECKED : BST_UNCHECKED);
 
   modified_ = false;
 }

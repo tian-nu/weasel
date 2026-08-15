@@ -297,14 +297,13 @@ void DictManagementDialog::UpdateLastSyncText() {
   if (in) {
     std::getline(in, when);
     // trim trailing whitespace/CR
-    while (!when.empty() &&
-           (when.back() == L'\r' || when.back() == L'\n' ||
-            when.back() == L' '))
+    while (!when.empty() && (when.back() == L'\r' || when.back() == L'\n' ||
+                             when.back() == L' '))
       when.pop_back();
   }
-  SetDlgItemTextW(IDC_SYNC_STATUS,
-                  (L"上次同步：" + (when.empty() ? L"尚未同步" : when))
-                      .c_str());
+  SetDlgItemTextW(
+      IDC_SYNC_STATUS,
+      (L"上次同步：" + (when.empty() ? L"尚未同步" : when)).c_str());
 }
 
 LRESULT DictManagementDialog::OnChanged(WORD, WORD, HWND, BOOL&) {
@@ -369,9 +368,10 @@ LRESULT DictManagementDialog::OnOpenSyncDir(WORD, WORD, HWND, BOOL&) {
     MultiByteToWideChar(CP_ACP, 0, buf, -1, wbuf, _countof(wbuf));
     dir = wbuf;
   }
-  if (dir.empty() || ::GetFileAttributesW(dir.c_str()) == INVALID_FILE_ATTRIBUTES)
-    ::MessageBox(m_hWnd, L"同步目录不存在，请先设置并同步。",
-                 L"【小狼毫】", MB_OK | MB_ICONINFORMATION);
+  if (dir.empty() ||
+      ::GetFileAttributesW(dir.c_str()) == INVALID_FILE_ATTRIBUTES)
+    ::MessageBox(m_hWnd, L"同步目录不存在，请先设置并同步。", L"【小狼毫】",
+                 MB_OK | MB_ICONINFORMATION);
   else
     ::ShellExecuteW(NULL, L"open", dir.c_str(), NULL, NULL, SW_SHOW);
   return 0;
