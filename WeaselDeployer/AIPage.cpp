@@ -107,9 +107,11 @@ void AIPage::Load() {
   std::wstring model_path = WeaselUserDataPath() / L"ai" / L"model.lmbin";
   std::error_code ec;
   bool has_model = std::filesystem::exists(model_path, ec);
+  // status prefix + path on one line; SS_ENDELLIPSIS truncates the tail so the
+  // status word ("已就绪"/"未安装") stays visible even when the path is long.
   std::wstring status =
-      has_model ? L"模型文件：已就绪\n" : L"模型文件：尚未安装\n";
-  SetDlgItemTextW(IDC_AI_MODEL_PATH, (status + model_path).c_str());
+      (has_model ? L"已就绪  " : L"未安装  ") + model_path;
+  SetDlgItemTextW(IDC_AI_MODEL_PATH, status.c_str());
   modified_ = false;
 }
 
