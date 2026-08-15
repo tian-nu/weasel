@@ -6,6 +6,10 @@
 
 #pragma comment(lib, "dwmapi.lib")
 
+#ifndef DWMWA_USE_IMMERSIVE_DARK_MODE
+#define DWMWA_USE_IMMERSIVE_DARK_MODE 20
+#endif
+
 namespace {
 
 // undocumented uxtheme ordinals; stable since Windows 10 1809

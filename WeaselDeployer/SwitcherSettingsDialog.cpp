@@ -31,12 +31,12 @@ LRESULT SwitcherSettingsDialog::OnSchemaListCustomDraw(int,
     handled = FALSE;
     return CDRF_DODEFAULT;
   }
-  LPNMCUSTOMDRAW cd = reinterpret_cast<LPNMCUSTOMDRAW>(hdr);
-  if (cd->dwDrawStage == CDDS_PREPAINT) {
+  LPNMLVCUSTOMDRAW cd = reinterpret_cast<LPNMLVCUSTOMDRAW>(hdr);
+  if (cd->nmcd.dwDrawStage == CDDS_PREPAINT) {
     handled = TRUE;
     return CDRF_NOTIFYITEMDRAW;
   }
-  if (cd->dwDrawStage == CDDS_ITEMPREPAINT) {
+  if (cd->nmcd.dwDrawStage == CDDS_ITEMPREPAINT) {
     cd->clrText = RGB(232, 232, 232);
     cd->clrTextBk = RGB(48, 48, 48);
     handled = TRUE;
