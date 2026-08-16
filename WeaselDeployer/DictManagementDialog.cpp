@@ -28,7 +28,9 @@ LRESULT DictManagementDialog::OnDrawItem(UINT, WPARAM, LPARAM lParam, BOOL&) {
 }
 
 // dialog background follows the theme
-LRESULT DictManagementDialog::OnEraseBkgnd(UINT, WPARAM wParam, LPARAM,
+LRESULT DictManagementDialog::OnEraseBkgnd(UINT,
+                                           WPARAM wParam,
+                                           LPARAM,
                                            BOOL& handled) {
   handled = TRUE;
   return UITheme::EraseBackground(m_hWnd, (HDC)wParam);

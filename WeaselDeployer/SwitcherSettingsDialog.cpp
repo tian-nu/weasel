@@ -29,7 +29,9 @@ LRESULT SwitcherSettingsDialog::OnDrawItem(UINT, WPARAM, LPARAM lParam, BOOL&) {
 }
 
 // dialog background follows the theme
-LRESULT SwitcherSettingsDialog::OnEraseBkgnd(UINT, WPARAM wParam, LPARAM,
+LRESULT SwitcherSettingsDialog::OnEraseBkgnd(UINT,
+                                             WPARAM wParam,
+                                             LPARAM,
                                              BOOL& handled) {
   handled = TRUE;
   return UITheme::EraseBackground(m_hWnd, (HDC)wParam);

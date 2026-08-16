@@ -43,11 +43,11 @@ LRESULT EraseBackground(HWND hwnd, HDC dc);
 // owner-drawn control ids to a UITheme element kind and calls this via its
 // WM_DRAWITEM handler.
 enum class Kind {
-  PushButton,    // normal push button / default push button
-  CheckBox,      // check box
-  RadioButton,   // radio button
-  GroupBox,      // framed group box (SS_OWNERDRAW static)
-  NavItem,       // navigation list row
+  PushButton,   // normal push button / default push button
+  CheckBox,     // check box
+  RadioButton,  // radio button
+  GroupBox,     // framed group box (SS_OWNERDRAW static)
+  NavItem,      // navigation list row
 };
 
 // Inspects the owner-drawn control (dis->hwndItem) to decide whether it is a

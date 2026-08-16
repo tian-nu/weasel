@@ -178,7 +178,10 @@ LRESULT SettingsDialog::OnCtlColor(UINT msg,
 }
 
 // dialog background follows the theme
-LRESULT SettingsDialog::OnEraseBkgnd(UINT, WPARAM wParam, LPARAM, BOOL& handled) {
+LRESULT SettingsDialog::OnEraseBkgnd(UINT,
+                                     WPARAM wParam,
+                                     LPARAM,
+                                     BOOL& handled) {
   handled = TRUE;
   return UITheme::EraseBackground(m_hWnd, (HDC)wParam);
 }

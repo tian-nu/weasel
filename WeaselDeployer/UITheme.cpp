@@ -15,23 +15,23 @@ namespace {
 // palette
 // ---------------------------------------------------------------------------
 struct Palette {
-  COLORREF bg;             // dialog / static background
-  COLORREF control_bg;     // edit / listbox / combo background
-  COLORREF text;           // primary text
-  COLORREF text_secondary; // labels / hover text
-  COLORREF group_frame;    // group box frame
-  COLORREF button_bg;      // push button face
+  COLORREF bg;              // dialog / static background
+  COLORREF control_bg;      // edit / listbox / combo background
+  COLORREF text;            // primary text
+  COLORREF text_secondary;  // labels / hover text
+  COLORREF group_frame;     // group box frame
+  COLORREF button_bg;       // push button face
   COLORREF button_text;
   COLORREF button_border;
   COLORREF button_pressed;
   COLORREF button_hover;
-  COLORREF accent;             // selection / primary accent
+  COLORREF accent;  // selection / primary accent
   COLORREF accent_text;
-  COLORREF nav_bg;             // navigation rail background
-  COLORREF nav_active;         // active nav row
+  COLORREF nav_bg;      // navigation rail background
+  COLORREF nav_active;  // active nav row
   COLORREF nav_active_text;
-  COLORREF control_face;       // checkbox/radio box face in dark
-  COLORREF glyph;              // checkmark / radio dot / focus ring
+  COLORREF control_face;  // checkbox/radio box face in dark
+  COLORREF glyph;         // checkmark / radio dot / focus ring
   COLORREF disabled_text;
 };
 
@@ -89,7 +89,9 @@ HBRUSH g_bg_brush = NULL;
 HBRUSH g_control_brush = NULL;
 HFONT g_nav_font = NULL;
 
-HBRUSH CreateBrush(COLORREF c) { return ::CreateSolidBrush(c); }
+HBRUSH CreateBrush(COLORREF c) {
+  return ::CreateSolidBrush(c);
+}
 
 // paint an SSEndHorizontal focus/disabled state not needed; we re-create the
 // brushes whenever the palette changes so they always match the current theme.
@@ -153,7 +155,8 @@ void FillRoundRect(HDC dc, const RECT& rc, COLORREF fill, COLORREF border) {
   ::DeleteObject(fb);
   HPEN pen = ::CreatePen(PS_SOLID, 1, border);
   HPEN old_pen = (HPEN)::SelectObject(dc, pen);
-  HBRUSH old_brush = (HBRUSH)::SelectObject(dc, (HBRUSH)GetStockObject(NULL_BRUSH));
+  HBRUSH old_brush =
+      (HBRUSH)::SelectObject(dc, (HBRUSH)GetStockObject(NULL_BRUSH));
   ::RoundRect(dc, rc.left, rc.top, rc.right, rc.bottom, radius, radius);
   ::SelectObject(dc, old_pen);
   ::SelectObject(dc, old_brush);
@@ -172,8 +175,8 @@ void DrawCenteredText(HDC dc,
     return;
   COLORREF old_color = ::SetTextColor(dc, color);
   int old_mode = ::SetBkMode(dc, TRANSPARENT);
-  HFONT old_font = (HFONT)::SelectObject(dc, font ? font
-                                                 : (HFONT)::GetStockObject(DEFAULT_GUI_FONT));
+  HFONT old_font = (HFONT)::SelectObject(
+      dc, font ? font : (HFONT)::GetStockObject(DEFAULT_GUI_FONT));
   ::DrawTextW(dc, text, -1, (LPRECT)&rc,
               DT_SINGLELINE | DT_VCENTER | DT_END_ELLIPSIS | extra_flags);
   ::SelectObject(dc, old_font);
@@ -284,8 +287,8 @@ LRESULT DrawControl(LPDRAWITEMSTRUCT dis) {
     LONG type = (LONG)style & BS_TYPEMASK;
     if (type == BS_RADIOBUTTON || type == BS_AUTORADIOBUTTON)
       return DrawItem(dis, Kind::RadioButton, label);
-    if (type == BS_CHECKBOX || type == BS_AUTOCHECKBOX ||
-        type == BS_3STATE || type == BS_AUTO3STATE)
+    if (type == BS_CHECKBOX || type == BS_AUTOCHECKBOX || type == BS_3STATE ||
+        type == BS_AUTO3STATE)
       return DrawItem(dis, Kind::CheckBox, label);
     return DrawItem(dis, Kind::PushButton, label);
   }
@@ -304,10 +307,9 @@ LRESULT DrawItem(LPDRAWITEMSTRUCT dis, Kind kind, const wchar_t* label) {
   RECT inner = rc;
   // inherit the control's font (the dialog font) so owner-drawn text matches
   // the labels rendered by the standard controls on the same page
-  HFONT ctrl_font =
-      dis->hwndItem
-          ? (HFONT)::SendMessageW(dis->hwndItem, WM_GETFONT, 0, 0)
-          : NULL;
+  HFONT ctrl_font = dis->hwndItem
+                        ? (HFONT)::SendMessageW(dis->hwndItem, WM_GETFONT, 0, 0)
+                        : NULL;
 
   bool enabled = (dis->itemState & ODS_DISABLED) == 0;
   bool selected = (dis->itemState & ODS_SELECTED) != 0;
@@ -440,8 +442,8 @@ LRESULT DrawItem(LPDRAWITEMSTRUCT dis, Kind kind, const wchar_t* label) {
         RECT bar = {rc.left, rc.top, rc.left + 3, rc.bottom};
         FillRectColor(dc, bar, p.accent);
       }
-      COLORREF fg = enabled ? (selected ? p.nav_active_text : p.text)
-                            : p.disabled_text;
+      COLORREF fg =
+          enabled ? (selected ? p.nav_active_text : p.text) : p.disabled_text;
       RECT textRc = rc;
       textRc.left += 14;
       textRc.right -= 6;
