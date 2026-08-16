@@ -121,47 +121,20 @@ LRESULT SettingsDialog::OnClose(UINT, WPARAM, LPARAM, BOOL&) {
   return 0;
 }
 
-// owner-draw painting for the navigation list: soft warm selection with a
-// left accent bar, vertically centered text.
+// owner-drawn painting: the navigation list rows use the modern sidebar style;
+// owner-drawn buttons / group boxes on this dialog are painted generically.
 LRESULT SettingsDialog::OnDrawItem(UINT, WPARAM, LPARAM lParam, BOOL&) {
   LPDRAWITEMSTRUCT dis = reinterpret_cast<LPDRAWITEMSTRUCT>(lParam);
-  if (!dis || dis->CtlID != IDC_NAV_LIST || dis->itemID == (UINT)-1)
+  if (!dis)
     return 0;
-  HDC dc = dis->hDC;
-  RECT rc = dis->rcItem;
-  bool selected = (dis->itemState & ODS_SELECTED) != 0;
-  bool dark = UITheme::IsDark();
-  // modern selection: warm tinted background + orange accent bar on the left
-  COLORREF bg = selected ? (dark ? RGB(64, 52, 44) : RGB(247, 234, 226))
-                         : (dark ? RGB(32, 32, 32) : GetSysColor(COLOR_WINDOW));
-  COLORREF fg =
-      selected ? (dark ? RGB(247, 234, 226) : RGB(70, 56, 48))
-               : (dark ? RGB(224, 224, 224) : GetSysColor(COLOR_WINDOWTEXT));
-  HBRUSH brush = ::CreateSolidBrush(bg);
-  ::FillRect(dc, &rc, brush);
-  ::DeleteObject(brush);
-  if (selected) {
-    HBRUSH accent = ::CreateSolidBrush(RGB(217, 119, 87));
-    RECT bar = {rc.left, rc.top, rc.left + 4, rc.bottom};
-    ::FillRect(dc, &bar, accent);
-    ::DeleteObject(accent);
+  if (dis->CtlID == IDC_NAV_LIST) {
+    if (dis->itemID == (UINT)-1)
+      return 0;
+    wchar_t text[128] = {0};
+    ::SendMessage(dis->hwndItem, LB_GETTEXT, dis->itemID, (LPARAM)text);
+    return UITheme::DrawItem(dis, UITheme::Kind::NavItem, text);
   }
-
-  wchar_t text[128] = {0};
-  ::SendMessage(dis->hwndItem, LB_GETTEXT, dis->itemID, (LPARAM)text);
-  RECT rcText = rc;
-  rcText.left += 16;
-  rcText.right -= 8;
-  HFONT old = (HFONT)::SelectObject(
-      dc, nav_font_ ? nav_font_ : (HFONT)::GetStockObject(DEFAULT_GUI_FONT));
-  ::SetBkMode(dc, TRANSPARENT);
-  ::SetTextColor(dc, fg);
-  ::DrawText(dc, text, -1, &rcText,
-             DT_LEFT | DT_VCENTER | DT_SINGLELINE | DT_END_ELLIPSIS);
-  ::SelectObject(dc, old);
-  if (selected && ::GetFocus() == dis->hwndItem)
-    ::DrawFocusRect(dc, &dis->rcItem);
-  return TRUE;
+  return UITheme::DrawControl(dis);
 }
 
 LRESULT SettingsDialog::OnShowPage(UINT, WPARAM wParam, LPARAM, BOOL&) {
@@ -202,6 +175,12 @@ LRESULT SettingsDialog::OnCtlColor(UINT msg,
   }
   handled = FALSE;
   return 0;
+}
+
+// dialog background follows the theme
+LRESULT SettingsDialog::OnEraseBkgnd(UINT, WPARAM wParam, LPARAM, BOOL& handled) {
+  handled = TRUE;
+  return UITheme::EraseBackground(m_hWnd, (HDC)wParam);
 }
 
 void SettingsDialog::ShowPage(int index) {

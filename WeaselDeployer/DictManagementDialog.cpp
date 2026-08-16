@@ -22,6 +22,18 @@ LRESULT DictManagementDialog::OnCtlColor(UINT msg,
   return 0;
 }
 
+// owner-drawn push buttons / check boxes / radio buttons / group boxes
+LRESULT DictManagementDialog::OnDrawItem(UINT, WPARAM, LPARAM lParam, BOOL&) {
+  return UITheme::DrawControl(reinterpret_cast<LPDRAWITEMSTRUCT>(lParam));
+}
+
+// dialog background follows the theme
+LRESULT DictManagementDialog::OnEraseBkgnd(UINT, WPARAM wParam, LPARAM,
+                                           BOOL& handled) {
+  handled = TRUE;
+  return UITheme::EraseBackground(m_hWnd, (HDC)wParam);
+}
+
 namespace {
 
 // ---- quick delete (moved from the Keys page) ----

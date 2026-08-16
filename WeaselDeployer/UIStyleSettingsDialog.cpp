@@ -23,6 +23,18 @@ LRESULT UIStyleSettingsDialog::OnCtlColor(UINT msg,
   return 0;
 }
 
+// owner-drawn push buttons / check boxes / radio buttons / group boxes
+LRESULT UIStyleSettingsDialog::OnDrawItem(UINT, WPARAM, LPARAM lParam, BOOL&) {
+  return UITheme::DrawControl(reinterpret_cast<LPDRAWITEMSTRUCT>(lParam));
+}
+
+// dialog background follows the theme
+LRESULT UIStyleSettingsDialog::OnEraseBkgnd(UINT, WPARAM wParam, LPARAM,
+                                            BOOL& handled) {
+  handled = TRUE;
+  return UITheme::EraseBackground(m_hWnd, (HDC)wParam);
+}
+
 UIStyleSettingsDialog::UIStyleSettingsDialog()
     : settings_(nullptr), loaded_(false), embedded_(false), modified_(false) {}
 

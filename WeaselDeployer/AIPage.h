@@ -18,6 +18,8 @@ class AIPage : public CDialogImpl<AIPage> {
   BEGIN_MSG_MAP(AIPage)
   MESSAGE_HANDLER(WM_INITDIALOG, OnInitDialog)
   MESSAGE_HANDLER(WM_CLOSE, OnClose)
+  MESSAGE_HANDLER(WM_DRAWITEM, OnDrawItem)
+  MESSAGE_HANDLER(WM_ERASEBKGND, OnEraseBkgnd)
   MESSAGE_HANDLER(WM_APP + 1, OnModelCopied)
   MESSAGE_RANGE_HANDLER(WM_CTLCOLORMSGBOX, WM_CTLCOLORSTATIC, OnCtlColor)
   COMMAND_ID_HANDLER(IDC_AI_MODE_OFF, OnModeChanged)
@@ -35,6 +37,8 @@ class AIPage : public CDialogImpl<AIPage> {
  protected:
   LRESULT OnInitDialog(UINT, WPARAM, LPARAM, BOOL&);
   LRESULT OnClose(UINT, WPARAM, LPARAM, BOOL&);
+  LRESULT OnDrawItem(UINT, WPARAM, LPARAM, BOOL&);
+  LRESULT OnEraseBkgnd(UINT, WPARAM, LPARAM, BOOL&);
   // posted by the copy worker thread when model switching finishes
   LRESULT OnModelCopied(UINT, WPARAM, LPARAM, BOOL&);
   LRESULT OnCtlColor(UINT, WPARAM, LPARAM, BOOL&);

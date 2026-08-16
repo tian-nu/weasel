@@ -28,6 +28,8 @@ class SwitcherSettingsDialog : public CDialogImpl<SwitcherSettingsDialog> {
   BEGIN_MSG_MAP(SwitcherSettingsDialog)
   MESSAGE_HANDLER(WM_INITDIALOG, OnInitDialog)
   MESSAGE_HANDLER(WM_CLOSE, OnClose)
+  MESSAGE_HANDLER(WM_DRAWITEM, OnDrawItem)
+  MESSAGE_HANDLER(WM_ERASEBKGND, OnEraseBkgnd)
   MESSAGE_HANDLER(kWM_SchemataRefreshed, OnSchemataRefreshed)
   MESSAGE_RANGE_HANDLER(WM_CTLCOLORMSGBOX, WM_CTLCOLORSTATIC, OnCtlColor)
   COMMAND_HANDLER(IDC_GET_SCHEMATA, BN_CLICKED, OnGetSchemata)
@@ -39,6 +41,8 @@ class SwitcherSettingsDialog : public CDialogImpl<SwitcherSettingsDialog> {
 
   LRESULT OnInitDialog(UINT, WPARAM, LPARAM, BOOL&);
   LRESULT OnClose(UINT, WPARAM, LPARAM, BOOL&);
+  LRESULT OnDrawItem(UINT, WPARAM, LPARAM, BOOL&);
+  LRESULT OnEraseBkgnd(UINT, WPARAM, LPARAM, BOOL&);
   LRESULT OnGetSchemata(WORD, WORD, HWND, BOOL&);
   LRESULT OnSchemataRefreshed(UINT, WPARAM, LPARAM, BOOL&);
   LRESULT OnOK(WORD, WORD, HWND, BOOL&);

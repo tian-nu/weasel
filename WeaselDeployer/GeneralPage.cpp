@@ -23,6 +23,17 @@ LRESULT GeneralPage::OnCtlColor(UINT msg,
   return 0;
 }
 
+// owner-drawn push buttons / check boxes / radio buttons / group boxes
+LRESULT GeneralPage::OnDrawItem(UINT, WPARAM, LPARAM lParam, BOOL&) {
+  return UITheme::DrawControl(reinterpret_cast<LPDRAWITEMSTRUCT>(lParam));
+}
+
+// dialog background follows the theme
+LRESULT GeneralPage::OnEraseBkgnd(UINT, WPARAM wParam, LPARAM, BOOL& handled) {
+  handled = TRUE;
+  return UITheme::EraseBackground(m_hWnd, (HDC)wParam);
+}
+
 namespace {
 
 // path of default.custom.yaml under the user data dir
