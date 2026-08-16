@@ -21,8 +21,8 @@ int g_override = 0;
 bool g_dark = false;
 bool g_init = false;
 
-HBRUSH g_bg_brush = NULL;      // dialog / static background
-HBRUSH g_control_brush = NULL; // edit / listbox background
+HBRUSH g_bg_brush = NULL;       // dialog / static background
+HBRUSH g_control_brush = NULL;  // edit / listbox background
 
 const wchar_t* kRegKey = L"Software\\Rime\\Weasel";
 const wchar_t* kRegValue = L"DarkSettingsUI";
@@ -54,8 +54,7 @@ void WriteOverride(int v) {
   HKEY key = NULL;
   if (::RegCreateKeyExW(HKEY_CURRENT_USER, kRegKey, 0, NULL, 0, KEY_SET_VALUE,
                         NULL, &key, NULL) == ERROR_SUCCESS) {
-    ::RegSetValueExW(key, kRegValue, 0, REG_DWORD, (const BYTE*)&v,
-                     sizeof(v));
+    ::RegSetValueExW(key, kRegValue, 0, REG_DWORD, (const BYTE*)&v, sizeof(v));
     ::RegCloseKey(key);
   }
 }
@@ -69,8 +68,7 @@ BOOL CALLBACK ApplyToChild(HWND hwnd, LPARAM lp) {
   if (_wcsicmp(cls, L"Button") == 0) {
     // classic rendering lets WM_CTLCOLOR* set the text color in dark mode
     pSetWindowTheme(hwnd, L"", L"");
-  } else if (_wcsicmp(cls, L"Edit") == 0 ||
-             _wcsicmp(cls, L"ListBox") == 0 ||
+  } else if (_wcsicmp(cls, L"Edit") == 0 || _wcsicmp(cls, L"ListBox") == 0 ||
              _wcsicmp(cls, L"ComboBox") == 0 ||
              _wcsicmp(cls, L"SysListView32") == 0 ||
              _wcsicmp(cls, L"SysTreeView32") == 0) {
