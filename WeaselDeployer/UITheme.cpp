@@ -1,8 +1,6 @@
 #include "stdafx.h"
 #include "UITheme.h"
-#include <uxtheme.h>
 #include <dwmapi.h>
-#include <string>
 
 #pragma comment(lib, "dwmapi.lib")
 
@@ -12,22 +10,19 @@
 
 namespace {
 
-// undocumented uxtheme ordinals; stable since Windows 10 1809
-typedef BOOL(WINAPI* AllowDarkModeForWindowProc)(HWND, BOOL);
-typedef ULONG(WINAPI* SetPreferredAppModeProc)(ULONG);
-typedef void(WINAPI* RefreshImmersiveColorPolicyStateProc)();
-
-AllowDarkModeForWindowProc pAllowDarkModeForWindow = nullptr;
-SetPreferredAppModeProc pSetPreferredAppMode = nullptr;
-RefreshImmersiveColorPolicyStateProc pRefreshPolicy = nullptr;
+// documented API only, resolved by name (never by undocumented ordinals:
+// on recent Windows 11 builds uxtheme is a forwarded stub and ordinal calls
+// can deadlock inside win32k, hanging the settings window at creation)
+typedef HRESULT(WINAPI* SetWindowThemeProc)(HWND, LPCWSTR, LPCWSTR);
+SetWindowThemeProc pSetWindowTheme = nullptr;
 
 // registry override: 0 = follow system, 1 = force dark, 2 = force light
 int g_override = 0;
 bool g_dark = false;
 bool g_init = false;
 
-HBRUSH g_bg_brush = NULL;       // dialog / static background
-HBRUSH g_control_brush = NULL;  // edit / listbox background
+HBRUSH g_bg_brush = NULL;      // dialog / static background
+HBRUSH g_control_brush = NULL; // edit / listbox background
 
 const wchar_t* kRegKey = L"Software\\Rime\\Weasel";
 const wchar_t* kRegValue = L"DarkSettingsUI";
@@ -59,27 +54,28 @@ void WriteOverride(int v) {
   HKEY key = NULL;
   if (::RegCreateKeyExW(HKEY_CURRENT_USER, kRegKey, 0, NULL, 0, KEY_SET_VALUE,
                         NULL, &key, NULL) == ERROR_SUCCESS) {
-    ::RegSetValueExW(key, kRegValue, 0, REG_DWORD, (const BYTE*)&v, sizeof(v));
+    ::RegSetValueExW(key, kRegValue, 0, REG_DWORD, (const BYTE*)&v,
+                     sizeof(v));
     ::RegCloseKey(key);
   }
 }
 
 BOOL CALLBACK ApplyToChild(HWND hwnd, LPARAM lp) {
   bool dark = lp != 0;
-  if (pAllowDarkModeForWindow)
-    pAllowDarkModeForWindow(hwnd, dark);
   wchar_t cls[64] = {0};
   ::GetClassNameW(hwnd, cls, 64);
+  if (!pSetWindowTheme)
+    return TRUE;
   if (_wcsicmp(cls, L"Button") == 0) {
     // classic rendering lets WM_CTLCOLOR* set the text color in dark mode
-    SetWindowTheme(hwnd, L"", L"");
-  } else if (_wcsicmp(cls, L"Edit") == 0 || _wcsicmp(cls, L"ListBox") == 0 ||
+    pSetWindowTheme(hwnd, L"", L"");
+  } else if (_wcsicmp(cls, L"Edit") == 0 ||
+             _wcsicmp(cls, L"ListBox") == 0 ||
              _wcsicmp(cls, L"ComboBox") == 0 ||
              _wcsicmp(cls, L"SysListView32") == 0 ||
              _wcsicmp(cls, L"SysTreeView32") == 0) {
-    // darkens scrollbars and selection; item colors come from
-    // WM_CTLCOLOR* / NM_CUSTOMDRAW
-    SetWindowTheme(hwnd, dark ? L"DarkMode_Explorer" : L"Explorer", NULL);
+    // best-effort dark scrollbars; item colors come from WM_CTLCOLOR*
+    pSetWindowTheme(hwnd, dark ? L"DarkMode_Explorer" : L"Explorer", NULL);
   }
   return TRUE;
 }
@@ -93,18 +89,9 @@ void InitForProcess() {
     return;
   g_init = true;
   HMODULE ux = ::LoadLibraryW(L"uxtheme.dll");
-  if (ux) {
-    pAllowDarkModeForWindow =
-        (AllowDarkModeForWindowProc)::GetProcAddress(ux, (LPCSTR)133);
-    pSetPreferredAppMode =
-        (SetPreferredAppModeProc)::GetProcAddress(ux, (LPCSTR)135);
-    pRefreshPolicy =
-        (RefreshImmersiveColorPolicyStateProc)::GetProcAddress(ux, (LPCSTR)134);
-    if (pSetPreferredAppMode)
-      pSetPreferredAppMode(1);  // allow dark
-    if (pRefreshPolicy)
-      pRefreshPolicy();
-  }
+  if (ux)
+    pSetWindowTheme =
+        (SetWindowThemeProc)::GetProcAddress(ux, "SetWindowTheme");
   g_override = ReadOverride();
   if (g_override == 1)
     g_dark = true;
@@ -129,15 +116,11 @@ void Apply(HWND root) {
   InitForProcess();
   if (!root)
     return;
-  // dark title bar / non-client frame on the top-level window
+  // dark title bar / non-client frame (documented DWM attribute)
   BOOL b = g_dark;
   ::DwmSetWindowAttribute(root, DWMWA_USE_IMMERSIVE_DARK_MODE, &b, sizeof(b));
-  if (pAllowDarkModeForWindow)
-    pAllowDarkModeForWindow(root, g_dark);
   ::EnumChildWindows(root, ApplyToChild, g_dark ? 1 : 0);
   ::InvalidateRect(root, NULL, TRUE);
-  // redraw pages on the next idle pass so erased areas settle
-  ::UpdateWindow(root);
 }
 
 LRESULT HandleCtlColor(UINT msg, HDC dc, HWND ctrl) {
