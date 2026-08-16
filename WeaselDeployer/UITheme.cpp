@@ -279,9 +279,13 @@ LRESULT DrawControl(LPDRAWITEMSTRUCT dis) {
   wchar_t cls[64] = {0};
   ::GetClassNameW(dis->hwndItem, cls, 64);
   if (_wcsicmp(cls, L"Button") == 0) {
-    if ((style & BS_RADIOBUTTON) == BS_RADIOBUTTON)
+    // low nibble (BS_TYPEMASK) holds the button type; auto* variants differ
+    // from the plain type only by the low nibble value.
+    LONG type = (LONG)style & BS_TYPEMASK;
+    if (type == BS_RADIOBUTTON || type == BS_AUTORADIOBUTTON)
       return DrawItem(dis, Kind::RadioButton, label);
-    if ((style & (BS_CHECKBOX | BS_AUTOCHECKBOX | BS_3STATE)) != 0)
+    if (type == BS_CHECKBOX || type == BS_AUTOCHECKBOX ||
+        type == BS_3STATE || type == BS_AUTO3STATE)
       return DrawItem(dis, Kind::CheckBox, label);
     return DrawItem(dis, Kind::PushButton, label);
   }
